@@ -27,4 +27,4 @@
 
 ## Environment limitation
 
-Java, Maven, Flutter and Dart executables were not found on PATH in the V-COMM checkout environment. No Maven or Flutter test/build was run, and no passing result is claimed. Install the supported toolchains or configure CI before calling the app build-verified.
+Java, Maven, Flutter and Dart executables were not found on PATH in the V-COMM checkout environment. No Maven or Flutter test/build was run, and no passing result is claimed. A GitHub Actions workflow now runs backend tests, Flutter analysis/tests, an Android debug APK build and an iOS simulator build; its first run has not reported a result yet.\n
