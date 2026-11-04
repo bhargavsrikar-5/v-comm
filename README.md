@@ -4,7 +4,7 @@
 
 V-COMM is a three-member university group project. This unified repository brings together the newer Flutter + Spring Boot implementation and the earlier Firebase-era source as a feature reference. It preserves the team's contribution history rather than presenting the work as a solo project.
 
-> **Project status: migration candidate / working prototype source.** GitHub Actions run 3 passed the Maven test suite, Flutter analysis/tests and iOS simulator build. The first Android build failed because Flutter 3.47.9 requires Gradle 8.14 while the initial wrapper was 8.12; the wrapper is now upgraded and pinned to Gradle 8.14.3, with an Android rerun pending. MySQL deployment, physical-device and full end-to-end verification remain outstanding. Group messaging, media messaging, an integrated admin web UI, notifications and several richer V1 message actions remain future work. Do not treat this repository as production-ready.
+> **Project status: migration candidate / working prototype source.** GitHub Actions run 6 passed the Maven backend tests, Flutter analysis/tests and Android debug APK build. The iOS simulator build remains queued in run 6; it passed in run 3. MySQL deployment, physical-device and full end-to-end verification remain outstanding. Group messaging, media messaging, an integrated admin web UI, notifications and several richer V1 message actions remain future work. Do not treat this repository as production-ready.
 
 ## Team
 
@@ -128,9 +128,9 @@ cd backend
 mvn test
 ```
 
-These are the required commands, not a claim that they have already passed. See [Baseline Verification](docs/BASELINE_VERIFICATION.md) for the checks actually performed and the remaining verification gates.
+Run these commands to verify a local checkout. See [Baseline Verification](docs/BASELINE_VERIFICATION.md) for CI results and remaining verification gates.
 
-Backend unit and HTTP integration test sources cover JWT verification, login, role-protected admin access, profile ownership and event ownership. They must still be run with Maven before their results can be considered verified.
+The backend unit and HTTP integration tests cover JWT verification, login, password changes, role-protected admin access, profile/search-history ownership and event ownership. They passed in GitHub Actions run 6.
 
 ## Security and data migration
 
