@@ -1,0 +1,61 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*service-account*.json
+*firebase-adminsdk*.json
+
+# Java / Gradle / Maven
+**/target/
+**/build/
+.gradle/
+*.class
+hs_err_pid*
+
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+coverage/
+
+# Android generated/local files
+**/.gradle/
+**/local.properties
+**/captures/
+**/.cxx/
+**/.externalNativeBuild/
+
+# iOS generated files
+**/Pods/
+**/.symlinks/
+**/DerivedData/
+**/Runner/GeneratedPluginRegistrant.*
+
+# Logs / temporary / local data
+*.log
+*.tmp
+*.bak
+*.db
+*.sqlite
+*.sqlite3
+uploads/
+user-data/
