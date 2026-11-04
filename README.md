@@ -1,70 +1,165 @@
 # V-COMM
 
-**A Faculty-Centric Campus Communication and Scheduling Platform**
+**A faculty-centred campus communication and scheduling platform**
 
-V-COMM is a university capstone project intended to bring faculty communication and day-to-day campus coordination into one application. The project scope documented by the team includes faculty profiles and availability, events/calendar, timetable access, faculty discovery, and direct/group communication.
+V-COMM is a three-member university group project. This unified repository brings together the newer Flutter + Spring Boot implementation and the earlier Firebase-era source as a feature reference. It preserves the team's contribution history rather than presenting the work as a solo project.
 
-> **Repository status: foundation scaffold.** This ZIP contains repository documentation, a proposed directory layout, and baseline ignore rules. It does **not** contain the Flutter application, Spring Boot implementation, database migrations, or a runnable release. Those will be migrated and implemented in subsequent, reviewed steps.
+> **Project status: migration candidate / working prototype source.** GitHub Actions run 6 passed the Maven backend tests, Flutter analysis/tests and Android debug APK build. The iOS simulator build remains queued in run 6; it passed in run 3. MySQL deployment, physical-device and full end-to-end verification remain outstanding. Group messaging, media messaging, an integrated admin web UI, notifications and several richer V1 message actions remain future work. Do not treat this repository as production-ready.
 
-## Project team
+## Team
 
-This is a three-member university group project. Preserve the team attribution in future releases and documentation.
-
-| Contributor | Student ID |
+| Contributor | GitHub |
 |---|---|
-| Arava Hithesh Prem | 22BCE20145 |
-| Chegu Bhargav Srikar | 22BCE7676 |
-| Malisetty Rupesh | 22BCE9097 |
+| Chegu Bhargav Srikar | [@bhargavsrikar-5](https://github.com/bhargavsrikar-5) |
+| Arava Hithesh Prem | [@hithesh1120](https://github.com/hithesh1120) |
+| Malisetty Rupesh | [@Rupesh42590](https://github.com/Rupesh42590) |
 
-**Project guide:** Dr. Kumar Debasis  
-**Institution:** VIT-AP University, School of Computer Science and Engineering  
-**Project report:** December 2025
+Project guide: **Dr. Kumar Debasis** · **VIT-AP University, School of CSE** · Capstone report: **December 2025**.
 
-## Intended technology direction
+See [AUTHORS.md](AUTHORS.md) for attribution notes and source repositories.
 
-- **Mobile client:** Flutter / Dart.
-- **Backend:** Java 21 with Spring Boot 3 REST APIs.
-- **Database:** MySQL for persistent deployments; H2 may be used for local development and automated tests.
-- **Admin experience:** a role-protected web interface that uses the same backend API. The existing Firebase-connected admin page is a legacy reference and is not integrated with the planned SQL backend.
+## Current technology
 
-This is the target direction, not a claim that all components are already integrated or production-ready. See [Architecture](docs/ARCHITECTURE.md) and [Migration Plan](docs/MIGRATION_PLAN.md).
+- **Mobile:** Flutter / Dart.
+- **API:** Java 21, Spring Boot 3.5.16, Spring Web, Spring Data JPA and Spring Security.
+- **Authentication:** BCrypt password hashing and stateless HS256 JWT bearer tokens.
+- **Database:** H2 in-memory for local evaluation by default; MySQL for persistent local/deployed environments.
+- **Schema management:** Flyway SQL migration.
+- **Legacy reference:** Flutter + Firebase source under `legacy/firebase-v1/`; it is not part of the active build.
+
+Spring Boot 3.5.16 was the final open-source 3.5.x release. Upgrade to a supported Spring Boot 4.x line and run the full regression suite before a long-lived public deployment. See [Framework Baseline](docs/FRAMEWORK_BASELINE.md).
 
 ## Repository layout
 
 ```text
 v-comm/
-├── admin/       # Admin interface; backend integration to be implemented
-├── backend/     # Spring Boot REST API; implementation to be migrated/reviewed
-├── mobile/      # Flutter application; implementation to be migrated/reviewed
-├── docs/        # Architecture, migration, security, testing and decisions
-└── scripts/     # Safe developer/CI helper scripts (added as needed)
+├── mobile/                       # Active Flutter client
+├── backend/                      # Active Spring Boot API
+├── admin/                        # Admin UI status and integration notes
+├── legacy/firebase-v1/            # Historical Firebase implementation (reference only)
+├── legacy/springboot-v2-reference/ # Original V2 README / provenance
+├── docs/                         # Architecture, features, API, security, migration
+├── AUTHORS.md
+├── CONTRIBUTING.md
+├── SECURITY.md
+└── LICENSE-STATUS.md
 ```
 
-## Current status
+## Features in the current source
 
-- [x] New canonical GitHub repository created.
-- [x] Initial architecture and migration documentation scaffolded.
-- [ ] Select and migrate the reviewed Flutter source snapshot.
-- [ ] Select and migrate the reviewed Spring Boot source snapshot.
-- [ ] Replace legacy Firebase admin integration with backend API integration.
-- [ ] Implement authentication, authorization, password hashing and data access controls.
-- [ ] Restore missing messaging capabilities against the SQL-backed API where approved.
-- [ ] Add repeatable local setup, automated tests and CI.
-- [ ] Verify end-to-end mobile, backend and admin workflows.
+- Faculty sign-in with a server-issued bearer token.
+- Faculty directory search and profile viewing/editing.
+- Present/absent status and timetable URL reference.
+- Event calendar with create, update, delete, today and upcoming views.
+- One-to-one text messages, conversation list, unread counts and read markers (client refreshes/polls; no WebSocket transport yet).
+- Admin-only faculty account provisioning API.
 
-See [Project Status](docs/PROJECT_STATUS.md) for the work sequence and verification gates.
+The old Firebase generation contains additional reference implementations for group chats, image/media messages, replies, forwarding, reactions, pin/star, archive and notification-related behavior. These are **not** integrated into the active Spring Boot application yet. See [Feature Matrix](docs/FEATURE_MATRIX.md).
 
-## Before running anything
+## Local setup
 
-This starter scaffold is documentation-only. There is no application command to run yet. When the application code is added, its exact prerequisites and commands must be documented in the relevant `mobile/`, `backend/` and `admin/` READMEs.
+### Prerequisites
 
-## Security and repository hygiene
+- Flutter SDK compatible with the Dart constraint in `mobile/pubspec.yaml`.
+- Java 21.
+- Maven 3.9+.
+- MySQL 8+ only when using the MySQL configuration; H2 is the default local database.
 
-- Never commit `.env` files, API tokens, database passwords, service-account JSON, private keys, or Android signing keystores.
-- Treat any signing key previously committed to an older repository as exposed; assess replacement before publishing releases.
-- Do not deploy the current legacy backend as-is. The source review identified plaintext password handling and insufficiently demonstrated endpoint authorization. See [Security Baseline](docs/SECURITY_BASELINE.md).
-- Do not copy Firebase credentials, production user data, generated build output, IDE state, or browser profiles into this repository.
+### 1. Configure and start the backend
 
-## License
+The backend requires a strong `JWT_SECRET` (at least 32 UTF-8 bytes). To enable the first administrator account, configure both `VCOMM_ADMIN_EMAIL` and `VCOMM_ADMIN_PASSWORD` (minimum 14 characters). No reusable demo credentials are committed.
 
-No license is included in this scaffold. Confirm ownership and permission for all contributed code and assets with the full project team before choosing and adding a license.
+**PowerShell example:**
+
+```powershell
+$env:JWT_SECRET = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(48))
+$env:VCOMM_ADMIN_EMAIL = "admin@example.edu"
+$env:VCOMM_ADMIN_PASSWORD = "REPLACE-WITH-A-UNIQUE-14-CHARACTER-OR-LONGER-PASSWORD"
+$env:VCOMM_ADMIN_NAME = "V-COMM Administrator"
+cd backend
+mvn spring-boot:run
+```
+
+**Bash example:**
+
+```bash
+export JWT_SECRET="$(openssl rand -base64 48)"
+export VCOMM_ADMIN_EMAIL="admin@example.edu"
+export VCOMM_ADMIN_PASSWORD="REPLACE-WITH-A-UNIQUE-14-CHARACTER-OR-LONGER-PASSWORD"
+export VCOMM_ADMIN_NAME="V-COMM Administrator"
+cd backend
+mvn spring-boot:run
+```
+
+The API listens on `http://localhost:8080/api`. H2 is in-memory and data is lost when the backend stops. For MySQL, set `DB_URL`, `DB_DRIVER=com.mysql.cj.jdbc.Driver`, `DB_USERNAME` and `DB_PASSWORD` before starting the API. Keep credentials in your local environment or secret manager, never in Git.
+
+The first admin account is provisioned at startup only when the environment variables are configured and the email is not already present. Use the admin bearer token to create faculty accounts through `POST /api/admin/users`. There is currently **no integrated admin web UI**; the endpoint can be exercised with an API client (for example, Postman or `curl`).
+
+### 2. Install and run the Flutter client
+
+```bash
+cd mobile
+flutter pub get
+flutter analyze
+flutter test
+```
+
+Set the API URL at run time:
+
+```bash
+# Android emulator
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080/api
+
+# iOS simulator / browser / desktop on the same host
+flutter run --dart-define=API_BASE_URL=http://localhost:8080/api
+
+# Physical Android/iOS device: replace the host with your development machine's LAN IP
+flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8080/api
+```
+
+The Flutter client stores its access token using `flutter_secure_storage` and attaches it as a Bearer token to authenticated API calls. Browser CORS origins are configured separately through `APP_CORS_ALLOWED_ORIGINS`.
+
+Android release builds declare the INTERNET permission; cleartext traffic is enabled only in the debug manifest for local API development. Configure HTTPS for release API deployments. The Android Gradle 8.14.3 wrapper scripts and JAR are tracked in `mobile/android/gradle/wrapper/` and `mobile/android/gradlew[.bat]`. The wrapper downloads Gradle 8.14.3 on first use.
+
+### 3. Backend verification
+
+```bash
+cd backend
+mvn test
+```
+
+Run these commands to verify a local checkout. See [Baseline Verification](docs/BASELINE_VERIFICATION.md) for CI results and remaining verification gates.
+
+The backend unit and HTTP integration tests cover JWT verification, login, password changes, role-protected admin access, profile/search-history ownership and event ownership. They passed in GitHub Actions run 6.
+
+## Security and data migration
+
+- Passwords are stored as BCrypt hashes in `password_hash`; user API responses use `UserResponse` DTOs.
+- Non-public endpoints require a valid Bearer token; the acting user is derived from the authenticated principal for user-owned actions.
+- Admin routes require the `ADMIN` role.
+- JWT signing secret, admin bootstrap credentials and database credentials are environment-supplied.
+- H2 console is disabled by default; do not enable it on an exposed network.
+- The Flyway schema is for a **new unified database**. It does not automatically convert an older V2 plaintext-password database. Re-provision faculty accounts with password resets; do not copy old plaintext passwords into the new schema.
+- Previously committed Android signing keystores in old repositories must be treated as exposed. They are not included here.
+- Legacy Firebase config/rules were not supplied as a complete deployable set. Do not re-add old service config or assume Firestore/Storage security rules are safe.
+
+See [Security Review](docs/SECURITY_AUDIT.md) and [SECURITY.md](SECURITY.md). This work has not been penetration-tested.
+
+## Licence and redistribution
+
+No open-source licence is included. Obtain agreement from all three contributors and review third-party assets before adding a licence or authorizing redistribution. See [LICENSE-STATUS.md](LICENSE-STATUS.md).
+
+## Project documentation
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Feature Matrix](docs/FEATURE_MATRIX.md)
+- [Current API Contract](docs/API_CURRENT.md)
+- [Security Review](docs/SECURITY_AUDIT.md)
+- [Migration Plan](docs/MIGRATION_PLAN.md)
+- [Data Model](docs/DATA_MODEL.md)
+- [Source Provenance](docs/SOURCE_PROVENANCE.md)
+- [Baseline Verification](docs/BASELINE_VERIFICATION.md)
+
+---
+
+**V-COMM — one place for faculty communication and coordination.**

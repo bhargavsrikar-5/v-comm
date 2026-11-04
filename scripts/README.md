@@ -1,3 +1,3 @@
-# Scripts
+# Developer scripts
 
-Place only reproducible, reviewed developer or CI helper scripts here. Scripts must not embed credentials, delete user data by default, or assume paths from one developer's machine. Document prerequisites and effects before adding a script.
+No project-specific automation scripts are included yet. Add scripts here only when they can be run reproducibly, are documented, and do not embed secrets or machine-specific paths.

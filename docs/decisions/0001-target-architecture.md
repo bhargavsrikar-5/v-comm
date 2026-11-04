@@ -1,23 +1,20 @@
-# ADR 0001: Target architecture for the unified repository
+# ADR 0001: Use Flutter + Spring Boot + relational persistence as the active target
 
-- **Status:** Proposed
-- **Date:** 2026-11-04
+- **Status:** Accepted for the unified migration candidate; not a production architecture sign-off.
+- **Date:** 4 November 2026.
 
 ## Context
 
-The project exists in at least two implementation generations: an earlier Flutter/Firebase implementation and a later Flutter/Spring Boot/SQL implementation. The identity and persistence models differ, so directly combining their data/service layers would create incompatible assumptions.
+The project exists in multiple Firebase-era snapshots and a later Flutter + Spring Boot migration. The Firebase generation contains richer messaging and notification-related UI/logic; the later generation moves identity and core application data to a relational Spring Boot API.
 
 ## Decision
 
-Use Flutter as the mobile client and Java Spring Boot REST APIs with a relational database as the target architecture. Treat the Firebase generation as a reference for feature behavior and UI expectations. The admin UI must integrate through the same secured backend API.
+Use the later Flutter + Spring Boot code as the active starting point. Keep Firebase V1 under `legacy/firebase-v1/` for reference. Rebuild any selected V1 capability against the relational identity and API model; do not copy V1 Firebase service/screens unchanged into the active mobile app.
 
 ## Consequences
 
-- Feature behavior can be recovered without retaining Firebase as a second source of truth.
-- API contracts and relational data mapping must be designed explicitly.
-- Security issues identified in the later backend must be fixed before deployment.
-- Real-time chat, media storage, notification delivery and admin permissions remain design decisions until their requirements and controls are agreed.
-
-## Revisit when
-
-The team identifies deployment constraints or confirms a requirement that materially changes this architecture.
+- The active client uses numeric relational IDs and bearer-authenticated REST calls.
+- The active backend uses BCrypt hashes, JWT authentication, role checks and owner-scoped services.
+- Group messaging, media, richer message actions and notifications require new relational/API design.
+- The original Firebase rules were not supplied for verification; historical Firebase deployment must not be assumed secure.
+- The active source remains a prototype until builds, tests, data-migration rehearsal and security review pass.

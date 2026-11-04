@@ -1,61 +1,66 @@
-# OS / editor
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# Secrets and local configuration
+# Environment and secrets
 .env
 .env.*
 !.env.example
-*.pem
-*.key
-*.p12
-*.pfx
 *.jks
 *.keystore
-*service-account*.json
-*firebase-adminsdk*.json
-
-# Java / Gradle / Maven
-**/target/
-**/build/
-.gradle/
-*.class
-hs_err_pid*
+key.properties
+serviceAccount*.json
+*-service-account*.json
+google-services.json
+GoogleService-Info.plist
 
 # Flutter / Dart
 .dart_tool/
-.packages
-.pub-cache/
-.pub/
-build/
 .flutter-plugins
 .flutter-plugins-dependencies
-.metadata
+.packages
+.pub-cache/
+build/
 coverage/
 
-# Android generated/local files
-**/.gradle/
-**/local.properties
+# Android / Gradle
+.gradle/
+local.properties
 **/captures/
 **/.cxx/
-**/.externalNativeBuild/
 
-# iOS generated files
-**/Pods/
-**/.symlinks/
-**/DerivedData/
-**/Runner/GeneratedPluginRegistrant.*
+# iOS / macOS
+Pods/
+DerivedData/
+*.xcuserstate
 
-# Logs / temporary / local data
+# Java / Maven
+target/
+*.class
 *.log
-*.tmp
-*.bak
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Generated outputs / local data
+*.apk
+*.aab
+*.ipa
+*.hprof
+*.dump
 *.db
 *.sqlite
 *.sqlite3
-uploads/
-user-data/
+
+# Firebase local configuration (legacy reference only)
+.firebase/
+.firebaserc
+firebase_options.dart
+firebase-debug.log
+firebase-debug.*.log
+functions/node_modules/
+
+# Cross-platform Flutter / Xcode generated state
+**/Flutter/ephemeral/
+**/flutter/ephemeral/
+**/xcuserdata/
+*.xcuserstate

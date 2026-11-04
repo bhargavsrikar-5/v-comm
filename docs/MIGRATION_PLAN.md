@@ -1,82 +1,76 @@
-# V-COMM Migration Plan
+# Unified migration plan
 
-## Guiding choice
+## Guiding decision
 
-Use the later Flutter + Spring Boot + SQL code line as the technical base. Use the earlier Flutter + Firebase line, capstone report, feature overview and APK as references for intended behavior and missing capabilities. The two generations have different identity and data models, so feature recovery must happen through the new backend contracts rather than by mixing Firebase services into the SQL-backed app.
+Use the newer Flutter + Spring Boot + relational generation as the active application baseline. Use the Firebase generation as a feature and UX reference. Do not copy V1 screens unchanged: Firebase UIDs/Firestore documents and the V2 numeric relational IDs/API contract are different systems.
 
-## Phase 0 — Preserve and inventory
+## Stage 0 — Source recovery and baseline
 
-- Keep all original repositories and ZIP snapshots unchanged.
-- Record each chosen source repository URL, branch, commit SHA, and date in `docs/SOURCE_PROVENANCE.md` before copying code.
-- Compare the candidate source trees and identify generated files, secrets, signing material, and duplicate implementations.
-- Confirm with all three contributors that the selected source and assets may be consolidated into the new canonical repository.
+- [x] Review the five GitHub repositories and source snapshots.
+- [x] Inspect the older Firebase source copies and recovered local working copy.
+- [x] Inspect the Spring Boot migration source.
+- [x] Inspect APK metadata and identify it as a Firebase-era build.
+- [x] Review capstone report and feature presentations.
+- [x] Create the unified repository layout and retain the legacy source reference without live Firebase configuration.
+- [ ] Run clean Flutter and Maven builds in an environment with the required toolchains.
 
-**Exit gate:** source provenance and team ownership/permission are documented; no credentials or private user data are included.
+## Stage 1 — Backend security foundation
 
-## Phase 1 — Repository foundation
+- [x] Add Spring Security and BCrypt password hashing.
+- [x] Remove plaintext password comparisons and seeded demo credentials.
+- [x] Add user DTOs and hide the credential hash.
+- [x] Implement JWT issuance, verification and authenticated principal.
+- [x] Protect non-public endpoints and derive caller identity from the principal.
+- [x] Add FACULTY/ADMIN role and administrator faculty-provisioning API.
+- [x] Add owner checks for profiles, presence, timetable URL, search history, events and direct messages.
+- [x] Restrict CORS by configured allow-list; disable H2 console by default; externalize secrets.
+- [x] Add initial unit tests for JWT verification and event ownership (test execution remains pending).
+- [ ] Add route-level authentication/admin authorization and cross-user data-isolation integration tests.
+- [ ] Add rate limiting, token revocation/refresh and security-event audit trail.
 
-- Add the reviewed application source under `mobile/` and `backend/`.
-- Add a project-specific `.gitignore` and configuration examples containing placeholders only.
-- Document exact local setup and supported development commands.
-- Add a minimal CI workflow after the real build commands are known.
+## Stage 2 — Database and domain model
 
-**Exit gate:** clean clone contains only intended source/documentation and has reproducible build instructions.
+- [x] Define normalized initial MySQL schema and Flyway migration.
+- [ ] Add conversation and group membership entities.
+- [ ] Add message type, attachment metadata, reply/forward relationships and timestamps.
+- [ ] Add per-user message reaction, pin/star and chat archive/delete state.
+- [ ] Define event time zone and timetable storage metadata.
+- [ ] Add pagination and performance indexes for chat history/conversations.
+- [ ] Design a safe account/data migration from the older database; never carry plaintext passwords forward.
 
-## Phase 2 — Backend security and persistence
+## Stage 3 — Flutter integration
 
-- Replace plaintext password storage/comparison with a vetted adaptive password hash (for example, Argon2id or BCrypt through a maintained library).
-- Never return password hashes or authentication internals in API responses.
-- Implement authentication and authorization checks on every protected endpoint.
-- Enforce ownership/role checks for profile, presence, events, conversations and admin operations.
-- Validate request bodies and return safe, consistent error responses.
-- Configure persistent MySQL for non-test environments; isolate H2 to tests/local profiles.
-- Add schema migrations and tests for authorization boundaries.
+- [x] Add secure token storage and bearer authorization headers.
+- [x] Implement session restoration and local logout/token-expiry handling.
+- [x] Update API calls to use principal-derived identity routes.
+- [ ] Standardize API error, loading, empty and offline states.
+- [ ] Add API/client integration tests and handle expired/invalid token responses consistently.
+- [ ] Add secure timetable/media upload through approved storage.
 
-**Exit gate:** automated tests demonstrate unauthenticated access is rejected and users cannot access or modify another user's protected data.
+## Stage 4 — Restore the V1 communication experience
 
-## Phase 3 — Mobile integration
+- [ ] Group creation, member management and role checks.
+- [ ] Rich text/image/file messages.
+- [ ] Reply, forward, reactions, edit and deletion semantics.
+- [ ] Pin/star and per-user archive state.
+- [ ] Unread counts/read receipts tests and pagination.
+- [ ] Real-time delivery (WebSocket/SSE or a documented polling alternative).
+- [ ] End-to-end notification flow and persisted user preferences.
 
-- Configure API base URL outside source code.
-- Replace any direct legacy Firebase data dependencies for migrated features with typed API clients.
-- Add loading, empty, validation and failure states.
-- Test login/session expiry and all key flows against a local backend.
+## Stage 5 — Administration and quality
 
-**Exit gate:** mobile app can complete documented core flows against the SQL-backed API.
+- [x] Add protected admin API and environment-based initial admin bootstrap.
+- [ ] Build an integrated admin web interface using the protected Spring Boot API.
+- [ ] Add unit, repository, API integration and Flutter widget tests.
+- [ ] Add CI for Flutter analysis/tests and Maven build/tests.
+- [ ] Add observability and privacy-safe logging.
+- [ ] Verify Android build, install APK and run a full feature walkthrough.
+- [ ] Upgrade from Spring Boot 3.5.x to a supported 4.x release and validate the migration.
 
-## Phase 4 — Admin migration
+## Stage 6 — Portfolio release
 
-- Rebuild the legacy Firebase-connected admin page around authenticated backend endpoints.
-- Add server-side admin role enforcement; hiding UI controls is not authorization.
-- Add audit records for sensitive administrative actions.
-- Validate manual and CSV-based account workflows, including row-level validation and safe error reporting.
-
-**Exit gate:** admin functions work exclusively through authorized backend APIs; no Firebase write path remains for migrated data.
-
-## Phase 5 — Feature recovery
-
-Prioritize features in this order, subject to team confirmation and test coverage:
-
-1. Faculty directory/search and profile/presence.
-2. Events/calendar CRUD.
-3. Timetable viewing.
-4. Direct messaging.
-5. Group conversations and membership/roles.
-6. Message actions such as reply, forward, edit, delete, reactions, pin/star and archive.
-7. Push notifications and media attachments, only after storage, privacy and access controls are designed.
-
-**Exit gate:** each feature has an agreed acceptance checklist and automated or documented manual test evidence.
-
-## Phase 6 — Release readiness
-
-- Run backend unit/integration tests and Flutter analysis/tests.
-- Perform dependency and secret scans.
-- Test a clean setup from the README.
-- Review privacy, data retention, backup/restore, logging and deployment configuration.
-- Add screenshots and a demo only after they reflect the current code.
-- Confirm team authorship and add a license only after permission is settled.
-
-**Exit gate:** a fresh clone can be built and the documented core workflows can be demonstrated without relying on private developer machines or credentials.
-
-## Not in scope for this initial scaffold
-
-This scaffold does not implement code migration, database schema, authentication, chat transport, deployment, CI, push notifications, or a production admin portal.
+- [ ] Confirm all three contributors agree on license and redistribution terms.
+- [ ] Review secret scanning, dependency checks and release signing.
+- [ ] Create a clear demo video/screenshots from the final build.
+- [ ] Update README with only verified feature claims and actual test results.
+- [ ] Publish one canonical repository and tag a reviewed release.
