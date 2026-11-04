@@ -1,0 +1,66 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+key.properties
+serviceAccount*.json
+*-service-account*.json
+google-services.json
+GoogleService-Info.plist
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+build/
+coverage/
+
+# Android / Gradle
+.gradle/
+local.properties
+**/captures/
+**/.cxx/
+
+# iOS / macOS
+Pods/
+DerivedData/
+*.xcuserstate
+
+# Java / Maven
+target/
+*.class
+*.log
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Generated outputs / local data
+*.apk
+*.aab
+*.ipa
+*.hprof
+*.dump
+*.db
+*.sqlite
+*.sqlite3
+
+# Firebase local configuration (legacy reference only)
+.firebase/
+.firebaserc
+firebase_options.dart
+firebase-debug.log
+firebase-debug.*.log
+functions/node_modules/
+
+# Cross-platform Flutter / Xcode generated state
+**/Flutter/ephemeral/
+**/flutter/ephemeral/
+**/xcuserdata/
+*.xcuserstate
