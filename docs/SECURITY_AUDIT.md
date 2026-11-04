@@ -8,9 +8,9 @@ This document compares the original Spring Boot V2 source with the current unifi
 |---|---|---|
 | Plaintext password storage and comparison | Replaced by BCrypt password hashing (`BCryptPasswordEncoder(12)`) and `password_hash` column | Confirm with DB/API integration tests; old plaintext accounts need reset/re-provisioning |
 | Password-bearing User entity serialized from APIs | `UserResponse` DTO is used for user/profile/auth responses; `passwordHash` is `@JsonIgnore` | Add serialization tests to prove the hash never appears in responses |
-| No authenticated request identity | JWT issued at login and validated by `JwtAuthenticationFilter`; protected routes require authentication | Add tests for missing, malformed, forged and expired tokens |
-| Client-supplied user ID trusted as identity | User-owned profile, status, timetable, search history, events and message sender use authenticated principal / owner checks | Add cross-user authorization integration tests |
-| No administrator authorization | `UserRole` and Spring Security `hasRole("ADMIN")`; admin user-provisioning routes | Add tests for faculty denied access and administrator allowed access |
+| No authenticated request identity | JWT issued at login and validated by `JwtAuthenticationFilter`; protected routes require authentication | Run the added JWT and HTTP integration tests for unauthenticated access, login, role gating and cross-user data access |
+| Client-supplied user ID trusted as identity | User-owned profile, status, timetable, search history, events and message sender use authenticated principal / owner checks | Run the added cross-user authorization integration tests |
+| No administrator authorization | `UserRole` and Spring Security `hasRole("ADMIN")`; admin user-provisioning routes | Run the added tests for faculty denied access and administrator allowed access |
 | Wildcard CORS | Central allow-list via `APP_CORS_ALLOWED_ORIGINS` | Set exact web origins for deployment and verify preflight behavior |
 | H2 console exposed by default | `spring.h2.console.enabled=false` by default | Never enable on a publicly reachable environment |
 | Predictable seeded demo accounts | Removed; optional initial admin is configured via environment variables, with minimum password length and BCrypt hashing | Keep bootstrap values in secret manager; no sample credentials are included |
@@ -19,7 +19,7 @@ This document compares the original Spring Boot V2 source with the current unifi
 
 1. **No token revocation or refresh flow.** Access tokens are stateless and remain valid until expiry (default 12 hours). Password changes do not currently revoke previously issued tokens.
 2. **No rate limiting / lockout.** Login, search and message routes need abuse protection at the API or gateway layer.
-3. **Authorization integration tests remain missing.** Focused backend unit tests now cover JWT verification and event owner checks, but no tests exercise the HTTP security filter chain, role-gated admin routes, BCrypt login or cross-user access through the API. The unit tests themselves have not yet been run in this environment.
+3. **Authorization integration test execution is pending.** Backend unit tests cover JWT verification and event owner checks. New HTTP integration test sources exercise the security filter chain, role-gated admin routes, BCrypt login, password change, DTO password-hash omission and cross-user profile, event and search-history access. None of these tests have run in this environment yet.
 4. **New database only.** Flyway migration creates the unified schema. It does not convert old plaintext-password V2 data. Re-provision accounts or reset passwords using a controlled migration plan.
 5. **H2 default is ephemeral.** It is for local evaluation only. Use MySQL with secrets supplied through the deployment environment for persistent use.
 6. **Admin surface incomplete.** The protected admin API exists, but there is no integrated web UI, audit trail or multi-admin lifecycle workflow.

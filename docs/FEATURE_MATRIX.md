@@ -35,8 +35,8 @@ Status definitions:
 | Push notifications | Cloud Function topic send; client topic subscription not found | Not found | Not end-to-end verified |
 | Notification preferences | UI toggle had TODO save action | Not found | Not implemented persistently |
 | Admin user panel | Separate Firebase HTML panel | Protected admin API only | Admin UI not integrated; endpoint requires ADMIN role |
-| Role-based access control | Firebase rules need separate verification | FACULTY/ADMIN roles + Spring Security | Present in source; automated authorization tests pending |
-| Backend security/ownership tests | Firebase rules not available for automated review | JWT signature/claims/config and event owner unit tests added | Source added; execution pending; route-level authorization tests still needed |
+| Role-based access control | Firebase rules need separate verification | FACULTY/ADMIN roles + Spring Security | Present in source; HTTP authorization test sources added, execution pending |
+| Backend security/ownership tests | Firebase rules not available for automated review | JWT signature/claims/config and event owner unit tests added | Unit and HTTP integration test sources added; execution pending |
 
 ## Verification note
 
