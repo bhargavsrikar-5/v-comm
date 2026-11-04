@@ -24,7 +24,8 @@ Use the newer Flutter + Spring Boot + relational generation as the active applic
 - [x] Add FACULTY/ADMIN role and administrator faculty-provisioning API.
 - [x] Add owner checks for profiles, presence, timetable URL, search history, events and direct messages.
 - [x] Restrict CORS by configured allow-list; disable H2 console by default; externalize secrets.
-- [ ] Add automated tests for authentication, authorization and data isolation.
+- [x] Add initial unit tests for JWT verification and event ownership (test execution remains pending).
+- [ ] Add route-level authentication/admin authorization and cross-user data-isolation integration tests.
 - [ ] Add rate limiting, token revocation/refresh and security-event audit trail.
 
 ## Stage 2 — Database and domain model

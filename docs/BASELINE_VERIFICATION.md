@@ -11,6 +11,9 @@
 - Android application identifier and Flutter API base URL configured for the unified workspace.
 - A stale Flutter secure-storage helper reference was corrected in this candidate before packaging.
 - XML, POM, plist, JSON and YAML files passed structural parsing during package preparation; this is not an application compile or dependency-resolution check.
+- Focused backend unit test sources cover JWT claims/signature/configuration and event ownership. They have not been executed in this environment.
+- Release Android manifest now declares INTERNET; debug-only cleartext traffic is limited to local backend development.
+- Android Gradle wrapper scripts/JAR are absent; an Android build cannot be considered reproducible until wrapper files are generated and tracked.
 
 ## Not yet verified
 
@@ -24,4 +27,4 @@
 
 ## Environment limitation
 
-Java 21 is present in the workspace, but Maven, Flutter and Dart executables are not installed. Therefore no claim of a successful Maven or Flutter build is made. Run the commands in the root README or configure CI before calling the app build-verified.
+Java, Maven, Flutter and Dart executables were not found on PATH in the V-COMM checkout environment. No Maven or Flutter test/build was run, and no passing result is claimed. Install the supported toolchains or configure CI before calling the app build-verified.

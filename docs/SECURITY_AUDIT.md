@@ -19,7 +19,7 @@ This document compares the original Spring Boot V2 source with the current unifi
 
 1. **No token revocation or refresh flow.** Access tokens are stateless and remain valid until expiry (default 12 hours). Password changes do not currently revoke previously issued tokens.
 2. **No rate limiting / lockout.** Login, search and message routes need abuse protection at the API or gateway layer.
-3. **No security integration tests.** The current environment lacks Maven, Flutter and Dart toolchains, so no backend tests or client analysis have been run here.
+3. **Authorization integration tests remain missing.** Focused backend unit tests now cover JWT verification and event owner checks, but no tests exercise the HTTP security filter chain, role-gated admin routes, BCrypt login or cross-user access through the API. The unit tests themselves have not yet been run in this environment.
 4. **New database only.** Flyway migration creates the unified schema. It does not convert old plaintext-password V2 data. Re-provision accounts or reset passwords using a controlled migration plan.
 5. **H2 default is ephemeral.** It is for local evaluation only. Use MySQL with secrets supplied through the deployment environment for persistent use.
 6. **Admin surface incomplete.** The protected admin API exists, but there is no integrated web UI, audit trail or multi-admin lifecycle workflow.

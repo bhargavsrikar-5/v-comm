@@ -119,6 +119,8 @@ flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8080/api
 
 The Flutter client stores its access token using `flutter_secure_storage` and attaches it as a Bearer token to authenticated API calls. Browser CORS origins are configured separately through `APP_CORS_ALLOWED_ORIGINS`.
 
+Android release builds declare the INTERNET permission; cleartext traffic is enabled only in the debug manifest for local API development. Configure HTTPS for release API deployments. The Android Gradle wrapper scripts and JAR are not currently tracked; generate them with Gradle 8.12 (`gradle wrapper --gradle-version 8.12`) and commit those non-secret wrapper files before relying on wrapper-based Android builds.
+
 ### 3. Backend verification
 
 ```bash
@@ -127,6 +129,8 @@ mvn test
 ```
 
 These are the required commands, not a claim that they have already passed. See [Baseline Verification](docs/BASELINE_VERIFICATION.md) for the checks actually performed and the remaining verification gates.
+
+Focused backend unit tests cover JWT verification and event ownership. They must still be run with Maven before their results can be considered verified.
 
 ## Security and data migration
 
