@@ -58,3 +58,9 @@ firebase_options.dart
 firebase-debug.log
 firebase-debug.*.log
 functions/node_modules/
+
+# Cross-platform Flutter / Xcode generated state
+**/Flutter/ephemeral/
+**/flutter/ephemeral/
+**/xcuserdata/
+*.xcuserstate
