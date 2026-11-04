@@ -1,6 +1,12 @@
 import java.util.Properties
 import java.io.FileInputStream
 
+plugins {
+    id("com.android.application")
+    id("kotlin-android")
+    id("dev.flutter.flutter-gradle-plugin")
+}
+
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
@@ -8,12 +14,6 @@ if (keystorePropertiesFile.exists()) {
 }
 val releaseSigningConfigured = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
     .all { !keystoreProperties.getProperty(it).isNullOrBlank() }
-
-plugins {
-    id("com.android.application")
-    id("kotlin-android")
-    id("dev.flutter.flutter-gradle-plugin")
-}
 
 android {
     namespace = "com.vcomm.platform"
