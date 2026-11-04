@@ -11,14 +11,14 @@
 - Android application identifier and Flutter API base URL configured for the unified workspace.
 - A stale Flutter secure-storage helper reference was corrected in this candidate before packaging.
 - XML, POM, plist, JSON and YAML files passed structural parsing during package preparation; this is not an application compile or dependency-resolution check.
-- Backend test sources cover JWT claims/signature/configuration, event ownership and HTTP-level login, role authorization, profile ownership and search-history isolation. Tests have not been executed in this environment.
+- GitHub Actions run 3 passed `mvn test`, including JWT, event ownership, login, password change, admin authorization and profile/search-history isolation tests.
 - Release Android manifest now declares INTERNET; debug-only cleartext traffic is limited to local backend development.
-- Official Gradle 8.12 wrapper scripts and JAR are now tracked; the JAR was extracted from a checksum-verified official Gradle distribution. The wrapper/build has not yet been executed.
+- Official Gradle 8.14.3 wrapper scripts and JAR are tracked; the JAR matches Gradle’s published checksum and the distribution URL is checksum-pinned. Android build rerun is pending after the initial Gradle minimum-version failure.
 
 ## Not yet verified
 
-- Flutter dependency resolution, `flutter analyze`, Flutter widget tests, Android wrapper execution or Android APK build.
-- Maven compile/test or Spring Boot runtime startup.
+- Flutter analysis, Flutter tests and the iOS simulator build passed in GitHub Actions run 3. Android debug build with the upgraded wrapper is pending.
+- MySQL connection, Flyway persistence across restart, physical-device walkthrough, full end-to-end flows and penetration testing.
 - MySQL connection, Flyway schema migration or data persistence across restart.
 - Full end-to-end sign-in, provisioning, events, search, profile and chat flows.
 - Authorization/data-isolation behavior through integration tests.
@@ -27,4 +27,4 @@
 
 ## Environment limitation
 
-Java, Maven, Flutter and Dart executables were not found on PATH in the V-COMM checkout environment. No Maven or Flutter test/build was run, and no passing result is claimed. A GitHub Actions workflow now runs backend tests, Flutter analysis/tests, an Android debug APK build and an iOS simulator build; its first run has not reported a result yet.\n
+Java, Maven, Flutter and Dart executables are not available in this Windows environment, so no local build/test was run. GitHub Actions run 3 passed Maven tests, Flutter analysis/tests and the iOS simulator build. The Android rerun after the Gradle 8.14.3 upgrade is pending.

@@ -4,7 +4,7 @@
 
 V-COMM is a three-member university group project. This unified repository brings together the newer Flutter + Spring Boot implementation and the earlier Firebase-era source as a feature reference. It preserves the team's contribution history rather than presenting the work as a solo project.
 
-> **Project status: migration candidate / working prototype source.** The Flutter client and Spring Boot API are present, and the backend now includes BCrypt password hashing, JWT bearer authentication, role-protected administration endpoints, DTO-based user responses, and ownership checks. The source has received a static review, but Flutter analysis, Maven tests, database integration, device builds and end-to-end verification have **not** yet been run in this environment. Group messaging, media messaging, an integrated admin web UI, notifications and several richer V1 message actions remain future work. Do not treat this repository as production-ready.
+> **Project status: migration candidate / working prototype source.** GitHub Actions run 3 passed the Maven test suite, Flutter analysis/tests and iOS simulator build. The first Android build failed because Flutter 3.47.9 requires Gradle 8.14 while the initial wrapper was 8.12; the wrapper is now upgraded and pinned to Gradle 8.14.3, with an Android rerun pending. MySQL deployment, physical-device and full end-to-end verification remain outstanding. Group messaging, media messaging, an integrated admin web UI, notifications and several richer V1 message actions remain future work. Do not treat this repository as production-ready.
 
 ## Team
 
@@ -119,7 +119,7 @@ flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8080/api
 
 The Flutter client stores its access token using `flutter_secure_storage` and attaches it as a Bearer token to authenticated API calls. Browser CORS origins are configured separately through `APP_CORS_ALLOWED_ORIGINS`.
 
-Android release builds declare the INTERNET permission; cleartext traffic is enabled only in the debug manifest for local API development. Configure HTTPS for release API deployments. The Android Gradle 8.12 wrapper scripts and JAR are tracked in `mobile/android/gradle/wrapper/` and `mobile/android/gradlew[.bat]`. The wrapper downloads Gradle 8.12 on first use.
+Android release builds declare the INTERNET permission; cleartext traffic is enabled only in the debug manifest for local API development. Configure HTTPS for release API deployments. The Android Gradle 8.14.3 wrapper scripts and JAR are tracked in `mobile/android/gradle/wrapper/` and `mobile/android/gradlew[.bat]`. The wrapper downloads Gradle 8.14.3 on first use.
 
 ### 3. Backend verification
 

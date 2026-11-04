@@ -9,11 +9,11 @@ Status definitions:
 
 | Feature | Firebase V1 source | Active Spring Boot candidate | Current assessment |
 |---|---|---|---|
-| Faculty sign-in | Firebase Authentication | Login + BCrypt + JWT + secure token storage | Present in source; runtime/security tests pending |
+| Faculty sign-in | Firebase Authentication | Login + BCrypt + JWT + secure token storage | Backend auth and authorization tests passed in CI; full mobile/device sign-in flow remains unverified |
 | Public registration | Admin-provisioned accounts | Public endpoint returns 403; admin provisioning API | Admin API present; integrated admin UI absent |
 | Password recovery | Firebase reset-email flow | Not found | Not implemented |
 | Change password | Profile flow | Authenticated API | Present in source; token revocation is not implemented |
-| Faculty profile | Profile/edit screens | Profile/edit screens + DTO-backed API | Present in source; integration tests pending |
+| Faculty profile | Profile/edit screens | Profile/edit screens + DTO-backed API | HTTP profile ownership tests passed in CI; full Flutter-to-API flow remains unverified |
 | Faculty directory/search | Firestore search UI | Authenticated search API + Flutter screen | Present in source; pagination absent |
 | Recent search history | Firestore profile history | Authenticated owner-scoped API/model | Present in source; runtime verification pending |
 | Present/absent status | Firestore status update | Owner-scoped API + Flutter UI | Present in source |
@@ -35,9 +35,9 @@ Status definitions:
 | Push notifications | Cloud Function topic send; client topic subscription not found | Not found | Not end-to-end verified |
 | Notification preferences | UI toggle had TODO save action | Not found | Not implemented persistently |
 | Admin user panel | Separate Firebase HTML panel | Protected admin API only | Admin UI not integrated; endpoint requires ADMIN role |
-| Role-based access control | Firebase rules need separate verification | FACULTY/ADMIN roles + Spring Security | Present in source; HTTP authorization test sources added, execution pending |
-| Backend security/ownership tests | Firebase rules not available for automated review | JWT signature/claims/config and event owner unit tests added | Unit and HTTP integration test sources added; execution pending |
+| Role-based access control | Firebase rules need separate verification | FACULTY/ADMIN roles + Spring Security | HTTP role authorization tests passed in CI; broader admin workflows remain unverified |
+| Backend security/ownership tests | Firebase rules not available for automated review | JWT signature/claims/config and event owner unit tests added | JWT and HTTP integration test suite passed in GitHub Actions run 3 |
 
 ## Verification note
 
-This matrix is based on static inspection of supplied source snapshots. No Flutter build, Maven test, MySQL deployment, device walkthrough, live Firebase inspection or end-to-end test was performed as part of this package preparation. Source presence is not equivalent to runtime verification.
+This matrix combines static inspection with GitHub Actions run 3, which passed Maven tests, Flutter analysis/tests and the iOS simulator build. The Android build failed on the initial Gradle version mismatch and is pending rerun. MySQL deployment, physical-device walkthrough, live Firebase inspection and full end-to-end testing remain outstanding. Source presence is not equivalent to full feature verification.
