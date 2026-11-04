@@ -1,81 +1,61 @@
-# V-COMM Architecture
+# Architecture
 
-## 1. Goal and scope
+## Active architecture
 
-V-COMM is intended to provide faculty with a unified place to manage their faculty profile and availability, find colleagues, access timetable information, coordinate events, and communicate through direct and group conversations.
+The active source uses Flutter as the client, Spring Boot as the API boundary, and a relational database for persistence. The former Firebase implementation is retained under `legacy/firebase-v1/` for feature and provenance reference only.
 
-The December 2025 capstone report describes a Flutter client backed by Firebase services. A later source snapshot migrates the backend direction to Java Spring Boot and a relational database. The canonical repository should use the Spring Boot + SQL direction as its target architecture while treating the Firebase version as a feature and behavior reference.
-
-## 2. Target logical architecture
-
-```text
-┌─────────────────────┐       HTTPS / JSON       ┌────────────────────────┐
-│ Flutter mobile app  │ ───────────────────────▶ │ Spring Boot REST API   │
-│ Dart                │ ◀─────────────────────── │ Java 21 / Spring Boot 3│
-└─────────────────────┘                          └────────────┬───────────┘
-                                                              │
-┌─────────────────────┐       HTTPS / JSON                    │ JPA / SQL
-│ Admin web interface │ ──────────────────────────────────────┘
-│ Role-protected UI   │                                       │
-└─────────────────────┘                             ┌─────────▼──────────┐
-                                                    │ MySQL              │
-                                                    │ H2 for tests/local │
-                                                    └────────────────────┘
+```mermaid
+flowchart TD
+    M[Flutter mobile application] -->|HTTPS / JSON + Bearer token| A[Spring Boot REST API]
+    A --> SEC[Spring Security + JWT filter]
+    SEC --> C[Controllers]
+    C --> S[Services / ownership rules]
+    S --> R[Spring Data JPA repositories]
+    R --> D[(MySQL / local H2)]
+    AD[Admin API client - no integrated UI yet] -->|ADMIN role token| A
+    A -. future .-> N[Notification provider]
+    A -. future .-> F[Media/object storage]
+    A -. future .-> RT[Group / real-time messaging]
 ```
 
-The diagram is a proposed target, not a verified deployment diagram. The admin interface must call the Spring Boot API; it must not maintain a separate Firebase user store.
+## Mobile client
 
-## 3. Main components
+`mobile/` contains the active Flutter app: sign-in, home/dashboard, faculty search, profile editing, calendar/events and one-to-one text chat. API calls are centralized in `mobile/lib/services/api_service.dart`. Access tokens are stored through `flutter_secure_storage`; authenticated requests attach an `Authorization: Bearer` header. The API base URL is configurable via `--dart-define=API_BASE_URL=...`.
 
-### Mobile client (`mobile/`)
+## Backend
 
-Flutter application for sign-in, profile and presence, faculty directory/search, events/calendar, timetable access, and messaging. The client should contain presentation and client-side state only; authorization and sensitive business rules belong on the server.
+`backend/` is a Java 21 / Spring Boot 3.5.16 service.
 
-### Backend (`backend/`)
+- `controller/` — REST endpoints and request mapping.
+- `service/` — business rules and owner checks.
+- `repository/` — Spring Data JPA access.
+- `model/` — relational entities.
+- `dto/` — request and response objects; user data leaves the API through `UserResponse` rather than the password-bearing JPA entity.
+- `security/` — JWT issuance, verification, principal and bearer filter.
+- `config/` — Spring Security, CORS and exception handling.
+- `bootstrap/` — optional environment-configured initial administrator.
 
-Spring Boot REST API. It should own authentication/session validation, authorization, validation, business rules, persistence, and safe response DTOs. Controllers must not serialize persistence entities directly when those entities contain password hashes or internal fields.
+Passwords are BCrypt-encoded (cost 12). Non-public API routes require authentication; admin routes additionally require `ROLE_ADMIN`. Owner-scoped methods use the current authenticated principal rather than trusting user IDs supplied by the client.
 
-### Admin (`admin/`)
+## Persistence
 
-A web-based administrative interface for authorized staff. It should use backend endpoints and server-side role checks. The currently supplied legacy admin page uses Firebase client SDK calls and is not compatible with the SQL-backed target without a deliberate rewrite.
+The application defaults to local in-memory H2 with the console disabled. MySQL is configurable via environment variables. Flyway migration `V1__create_vcomm_schema.sql` defines the unified schema; Hibernate validates the schema rather than creating tables automatically.
 
-### Persistence
+The initial migration is designed for a new database. It is not a data-preserving migration from the earlier plaintext-password V2 schema. Faculty accounts must be re-provisioned or have credentials reset before moving real users.
 
-MySQL is the intended persistent database. H2 can support isolated tests and local development, but an in-memory H2 configuration must not be mistaken for persistent production storage.
+## Legacy compatibility
 
-## 4. Existing implementation generations
+Firebase V1 identifies users by Firebase UIDs and stores messages in Firestore document paths. The active V2 relational API identifies users by numeric database IDs and uses different request/response contracts. Do not copy V1 screens or service code directly into the active app; port the desired user experience through the new REST API and relational data model.
 
-The reviewed source sets indicate two materially different generations:
+## Remaining architecture work
 
-| Area | Earlier Firebase generation | Later Spring Boot generation |
-|---|---|---|
-| Mobile | Flutter | Flutter |
-| Backend/data | Firebase Auth, Firestore, Storage and Cloud Functions | Java Spring Boot REST API with MySQL/H2 configuration |
-| Faculty directory and presence | Present in source/feature materials | Present in source |
-| Events/calendar | Present in source/feature materials | Present in source |
-| Timetable | Link-based access in source/feature materials | URL-based support in source |
-| Messaging | Direct and group messaging with richer message actions described in feature materials | Direct text messaging and conversation list; polling is used in the reviewed implementation |
-| Admin page | Firebase-connected | Legacy Firebase admin page remains disconnected from the SQL backend |
+- Group conversation, membership and admin-role domain model.
+- Attachment metadata and approved object storage.
+- Rich message operations (reply, forward, edit/delete, reactions, pin/star, archive).
+- Real-time or explicitly documented push/poll messaging.
+- Persisted notification preferences and verified delivery flow.
+- Integrated admin web interface calling the protected admin API.
+- Pagination, rate limiting, audit events and automated security tests.
+- Spring Boot 4.x upgrade and compatibility tests before a long-lived public deployment.
 
-This comparison is based on static source/document review. It is not proof that every feature is fully operational in a deployed environment.
-
-## 5. Migration principles
-
-1. Keep one canonical implementation of each feature in this repository.
-2. Use the later Spring Boot version as the backend architecture starting point, subject to security remediation.
-3. Use the older Firebase implementation and project documents as references for intended UX and feature behavior—not as code to paste blindly into the SQL-backed implementation.
-4. Map Firebase-era identifiers and document structures to explicit relational entities and API DTOs. Do not assume Firebase UIDs and SQL numeric IDs are interchangeable.
-5. Migrate in small reviewable changes with tests and a recorded source commit for provenance.
-6. Do not include signing keys, credentials, user databases, generated build folders, or machine-specific state.
-
-## 6. Decisions still required
-
-- Final authentication/session approach and token/session revocation strategy.
-- Exact relational schema and migration tool.
-- Whether chat delivery remains polling-based initially or moves to WebSocket/SSE.
-- File/image upload storage and access-control design.
-- Push-notification provider and consent/permission flow.
-- Admin roles, permissions and audit requirements.
-- License and ownership/third-party asset review.
-
-Do not treat these undecided items as implemented features.
+The source has not yet passed a clean build or end-to-end verification; see [Baseline Verification](BASELINE_VERIFICATION.md).

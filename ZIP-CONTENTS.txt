@@ -1,24 +1,21 @@
-V-COMM foundation scaffold
+V-COMM migration candidate
 
 Included:
-- README.md
-- .gitignore
-- docs/ARCHITECTURE.md
-- docs/MIGRATION_PLAN.md
-- docs/SECURITY_BASELINE.md
-- docs/PROJECT_STATUS.md
-- docs/CONTRIBUTING.md
-- docs/SOURCE_PROVENANCE.md
-- docs/decisions/0001-target-architecture.md
-- backend/README.md
-- mobile/README.md
-- admin/README.md
-- scripts/README.md
+- Active Flutter source and Android/iOS/web/desktop platform scaffolding
+- Active Spring Boot backend with BCrypt, JWT, role checks, owner checks and Flyway migration
+- Legacy Firebase V1 source reference (without live Firebase configuration)
+- Architecture, API, feature matrix, source provenance, security audit, verification and migration docs
+- Team attribution and contribution guidelines
+- .gitignore and placeholder environment example
 
-Not included:
-- Flutter source code
-- Spring Boot source code
-- Database migrations or seeded data
-- A working admin application
-- Secrets, Firebase service accounts, signing keys, or APKs
-- A license file (team ownership and permission must be confirmed first)
+Excluded:
+- Android signing keystores and signing passwords
+- Firebase service account/client platform configuration
+- Real API/JWT/database secrets and .env files
+- Generated build/cache folders, local databases and APK/IPA release artifacts
+- Integrated admin web UI (only the protected backend admin API is present)
+- Group chat/media/notification implementations in the active API (legacy Firebase reference only)
+
+Verification:
+- XML/POM, plist, JSON and YAML structural parsing passed.
+- Flutter, Dart and Maven application builds/tests were not run in the preparation environment.

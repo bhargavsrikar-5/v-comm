@@ -1,28 +1,15 @@
-# Add this starter package to `bhargavsrikar-5/v-comm`
+# Upload this migration candidate to GitHub
 
-**Important:** Do not upload this ZIP archive as a single file into GitHub. GitHub will store it as an archive; it will not unpack the project tree for you.
+This archive is intended for the existing branch `migration/clean-source-audit` in `bhargavsrikar-5/v-comm`. Do not upload it to `main` yet.
 
-## Recommended method on Windows (GitHub Desktop)
+## Recommended: GitHub Desktop
 
-1. Download and extract `v-comm-foundation-upload.zip` on your computer.
-2. Open GitHub Desktop and sign in to the GitHub account that owns `bhargavsrikar-5/v-comm`.
-3. Choose **File → Clone repository… → URL**.
-4. Enter `https://github.com/bhargavsrikar-5/v-comm.git` and clone it to a local folder.
-5. Open the extracted ZIP folder. Select **all its contents** (including `.gitignore` and `UPLOAD-TO-GITHUB.md`) and copy them.
-6. Paste those contents into the cloned `v-comm` folder. Do not copy the outer ZIP or create an extra nested `v-comm-foundation` folder.
-7. In GitHub Desktop, confirm the changed files are listed. Use commit message: `chore: add V-COMM repository foundation`.
-8. Click **Commit to main**, then **Push origin**.
+1. Clone `https://github.com/bhargavsrikar-5/v-comm.git` with GitHub Desktop if you have not already.
+2. In GitHub Desktop, select branch `migration/clean-source-audit` (it already exists).
+3. Extract this ZIP into a temporary folder.
+4. Copy **all contents** of the extracted folder into the cloned repository root, allowing files with the same names to be replaced.
+5. Review the changed-file list. Do not add any `.env`, `.jks`, `.keystore`, `google-services.json`, `GoogleService-Info.plist`, `firebase_options.dart`, or local build output.
+6. Commit with message `feat: add unified V-COMM Flutter and Spring Boot baseline` and push the `migration/clean-source-audit` branch.
+7. Do not merge into `main` until tests and feature/security review are complete.
 
-## Alternative: command line
-
-After cloning the empty repository, copy the extracted package contents into the cloned repository directory, then run:
-
-```bash
-git add .
-git commit -m "chore: add V-COMM repository foundation"
-git push origin main
-```
-
-## What this package contains
-
-This is a documentation and directory scaffold only. It does **not** contain runnable Flutter, Spring Boot, database, or admin-panel source code. See `README.md` and `docs/PROJECT_STATUS.md` for an honest list of what is completed and pending.
+If GitHub Desktop reports a conflict or unexpected deletion, stop and review before committing. The old source repositories are not modified by this package.

@@ -1,17 +1,23 @@
-# Backend — Spring Boot API
+# Spring Boot backend
 
-The intended backend is Java 21 + Spring Boot 3 with REST/JSON endpoints and a relational persistence layer.
+Java 21 · Spring Boot 3.5.16 · Spring Security · Spring Data JPA · Flyway.
 
-**Not yet migrated:** this directory currently contains no application source and cannot be built or run.
+## Run locally
 
-When source is added, document:
+Set `JWT_SECRET` to a random value of at least 32 UTF-8 bytes. To bootstrap the first administrator, also set `VCOMM_ADMIN_EMAIL` and `VCOMM_ADMIN_PASSWORD` (at least 14 characters). Then run:
 
-- JDK and build-tool versions.
-- Active Spring profiles and environment variables.
-- MySQL setup and schema migration command.
-- H2 test/local profile behavior.
-- API startup command and health endpoint.
-- Authentication, roles and endpoint authorization.
-- Unit/integration test commands.
+```bash
+mvn spring-boot:run
+```
 
-Never add real credentials or production data. See `../docs/SECURITY_BASELINE.md`.
+The API listens on `http://localhost:8080/api`. Local default persistence is in-memory H2 and resets when the service stops. Set `DB_URL`, `DB_DRIVER`, `DB_USERNAME` and `DB_PASSWORD` to use MySQL. Never commit real values.
+
+See `../README.md`, `../docs/API_CURRENT.md` and `../docs/SECURITY_AUDIT.md` for setup, routes and known limitations.
+
+## Verification
+
+```bash
+mvn test
+```
+
+The build and test command has not yet been run in the preparation environment because Maven is not installed there.
