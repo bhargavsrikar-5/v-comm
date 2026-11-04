@@ -47,6 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
         result['token'],
         expiresInSeconds: result['expiresInSeconds'] as int,
       );
+      if (!mounted) return;
       showAppSnackBar(context, "Welcome back, ${result['user'].name}!");
       Navigator.pushReplacement(
         context,
