@@ -11,13 +11,13 @@
 - Android application identifier and Flutter API base URL configured for the unified workspace.
 - A stale Flutter secure-storage helper reference was corrected in this candidate before packaging.
 - XML, POM, plist, JSON and YAML files passed structural parsing during package preparation; this is not an application compile or dependency-resolution check.
-- Focused backend unit test sources cover JWT claims/signature/configuration and event ownership. They have not been executed in this environment.
+- Backend test sources cover JWT claims/signature/configuration, event ownership and HTTP-level login, role authorization, profile ownership and search-history isolation. Tests have not been executed in this environment.
 - Release Android manifest now declares INTERNET; debug-only cleartext traffic is limited to local backend development.
-- Android Gradle wrapper scripts/JAR are absent; an Android build cannot be considered reproducible until wrapper files are generated and tracked.
+- Official Gradle 8.12 wrapper scripts and JAR are now tracked; the JAR was extracted from a checksum-verified official Gradle distribution. The wrapper/build has not yet been executed.
 
 ## Not yet verified
 
-- Flutter dependency resolution, `flutter analyze`, Flutter widget tests or Android APK build.
+- Flutter dependency resolution, `flutter analyze`, Flutter widget tests, Android wrapper execution or Android APK build.
 - Maven compile/test or Spring Boot runtime startup.
 - MySQL connection, Flyway schema migration or data persistence across restart.
 - Full end-to-end sign-in, provisioning, events, search, profile and chat flows.
