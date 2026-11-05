@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - migration/clean-source-audit
+      - vcomm/requirements-completion
   pull_request:
     branches:
       - migration/clean-source-audit
+      - main
   workflow_dispatch:
 
 permissions:
