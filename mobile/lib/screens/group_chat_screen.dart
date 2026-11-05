@@ -54,6 +54,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     name.dispose(); description.dispose();
     if (created == null || !mounted) return;
     await _load();
+    if (!mounted) return;
     await Navigator.push(context, MaterialPageRoute(builder: (_) => GroupRoomScreen(group: created))).then((_) => _load());
   }
 
