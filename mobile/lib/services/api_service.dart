@@ -5,11 +5,13 @@ import '../models/user_model.dart';
 import '../models/event_model.dart';
 import '../models/message_model.dart';
 import '../models/search_history_model.dart';
+import '../models/timetable_slot_model.dart';
+import '../models/group_model.dart';
 import '../utils/constants.dart';
 import 'auth_state.dart';
 
 class ApiService {
-  static const String baseUrl = AppConstants.baseUrl;
+  static final String baseUrl = AppConstants.baseUrl;
 
   static const Map<String, String> defaultHeaders = {
     'Content-Type': 'application/json',
@@ -92,6 +94,14 @@ class ApiService {
         'success': false,
         'message': 'Unable to connect to server',
       };
+    }
+  }
+
+  static Future<void> logout() async {
+    try {
+      await http.post(Uri.parse('$baseUrl/auth/logout'), headers: await _authenticatedHeaders());
+    } catch (e) {
+      debugPrint('Server logout failed; local credentials will still be cleared: $e');
     }
   }
 
@@ -179,6 +189,15 @@ class ApiService {
     return null;
   }
 
+  static Future<UserModel?> updateAvailability(int id, String status) async {
+    try {
+      final response = await http.put(Uri.parse('$baseUrl/users/$id/status'),
+          headers: await _authenticatedHeaders(), body: jsonEncode({'status': status}));
+      if (response.statusCode == 200) return UserModel.fromJson(jsonDecode(response.body));
+    } catch (e) { debugPrint('Error updating availability: $e'); }
+    return null;
+  }
+
   /// PUT /api/users/{id}/timetable
   static Future<UserModel?> updateTimetable(int id, String timetableUrl) async {
     try {
@@ -195,6 +214,33 @@ class ApiService {
       debugPrint("Error updating timetable: $e");
     }
     return null;
+  }
+
+  static Future<List<TimetableSlotModel>> getTimetableSlots(int userId) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/users/$userId/timetable/slots'), headers: await _authenticatedHeaders());
+      if (response.statusCode == 200) return (jsonDecode(response.body) as List).map((item) => TimetableSlotModel.fromJson(item)).toList();
+    } catch (e) { debugPrint('Error loading timetable slots: $e'); }
+    return [];
+  }
+
+  static Future<TimetableSlotModel?> saveTimetableSlot(int userId, {int? slotId, required String dayOfWeek,
+    required String startTime, required String endTime, required String courseName, String? activityDetails, String? location}) async {
+    try {
+      final uri = Uri.parse('$baseUrl/users/$userId/timetable/slots${slotId == null ? '' : '/$slotId'}');
+      final body = jsonEncode({'dayOfWeek': dayOfWeek, 'startTime': startTime, 'endTime': endTime,
+        'courseName': courseName.trim(), 'activityDetails': activityDetails?.trim(), 'location': location?.trim()});
+      final response = slotId == null
+          ? await http.post(uri, headers: await _authenticatedHeaders(), body: body)
+          : await http.put(uri, headers: await _authenticatedHeaders(), body: body);
+      if (response.statusCode == 200) return TimetableSlotModel.fromJson(jsonDecode(response.body));
+    } catch (e) { debugPrint('Error saving timetable slot: $e'); }
+    return null;
+  }
+
+  static Future<bool> deleteTimetableSlot(int userId, int slotId) async {
+    try { return (await http.delete(Uri.parse('$baseUrl/users/$userId/timetable/slots/$slotId'), headers: await _authenticatedHeaders())).statusCode == 200; }
+    catch (e) { debugPrint('Error deleting timetable slot: $e'); return false; }
   }
 
   /// GET /api/users/{id}/search-history
@@ -303,6 +349,8 @@ class ApiService {
     required String title,
     required String time,
     required DateTime eventDate,
+    String description = '', String? startTime, String? endTime,
+    String visibility = 'PRIVATE', int? reminderMinutesBefore,
   }) async {
     try {
       final response = await http.post(
@@ -311,6 +359,11 @@ class ApiService {
         body: jsonEncode({
           'title': title.trim(),
           'time': time.trim(),
+          'description': description.trim(),
+          if (startTime != null) 'startTime': startTime,
+          if (endTime != null) 'endTime': endTime,
+          'visibility': visibility,
+          'reminderMinutesBefore': reminderMinutesBefore,
           'eventDate': "${eventDate.year.toString().padLeft(4, '0')}-${eventDate.month.toString().padLeft(2, '0')}-${eventDate.day.toString().padLeft(2, '0')}",
         }),
       );
@@ -329,6 +382,8 @@ class ApiService {
     required String title,
     required String time,
     DateTime? eventDate,
+    String description = '', String? startTime, String? endTime,
+    String visibility = 'PRIVATE', int? reminderMinutesBefore,
   }) async {
     try {
       final response = await http.put(
@@ -337,6 +392,11 @@ class ApiService {
         body: jsonEncode({
           'title': title.trim(),
           'time': time.trim(),
+          'description': description.trim(),
+          if (startTime != null) 'startTime': startTime,
+          if (endTime != null) 'endTime': endTime,
+          'visibility': visibility,
+          'reminderMinutesBefore': reminderMinutesBefore,
           if (eventDate != null)
             'eventDate': "${eventDate.year.toString().padLeft(4, '0')}-${eventDate.month.toString().padLeft(2, '0')}-${eventDate.day.toString().padLeft(2, '0')}",
         }),
@@ -424,6 +484,47 @@ class ApiService {
     } catch (e) {
       debugPrint("Error sending message: $e");
     }
+    return null;
+  }
+
+  static Future<List<GroupModel>> getGroups() async {
+    try { final r = await http.get(Uri.parse('$baseUrl/groups'), headers: await _authenticatedHeaders());
+      if (r.statusCode == 200) return (jsonDecode(r.body) as List).map((j) => GroupModel.fromJson(j)).toList(); }
+    catch (e) { debugPrint('Error loading groups: $e'); }
+    return [];
+  }
+
+  static Future<GroupModel?> createGroup(String name, String description) async {
+    try { final r = await http.post(Uri.parse('$baseUrl/groups'), headers: await _authenticatedHeaders(),
+      body: jsonEncode({'name': name.trim(), 'description': description.trim()}));
+      if (r.statusCode == 200) return GroupModel.fromJson(jsonDecode(r.body)); }
+    catch (e) { debugPrint('Error creating group: $e'); }
+    return null;
+  }
+
+  static Future<GroupMemberModel?> addGroupMember(int groupId, int userId) async {
+    try { final r = await http.post(Uri.parse('$baseUrl/groups/$groupId/members'), headers: await _authenticatedHeaders(), body: jsonEncode({'userId': userId}));
+      if (r.statusCode == 200) return GroupMemberModel.fromJson(jsonDecode(r.body)); }
+    catch (e) { debugPrint('Error adding group member: $e'); }
+    return null;
+  }
+
+  static Future<bool> removeGroupMember(int groupId, int userId) async {
+    try { return (await http.delete(Uri.parse('$baseUrl/groups/$groupId/members/$userId'), headers: await _authenticatedHeaders())).statusCode == 200; }
+    catch (e) { debugPrint('Error removing group member: $e'); return false; }
+  }
+
+  static Future<List<GroupMessageModel>> getGroupMessages(int groupId) async {
+    try { final r = await http.get(Uri.parse('$baseUrl/groups/$groupId/messages'), headers: await _authenticatedHeaders());
+      if (r.statusCode == 200) return (jsonDecode(r.body) as List).map((j) => GroupMessageModel.fromJson(j)).toList(); }
+    catch (e) { debugPrint('Error loading group messages: $e'); }
+    return [];
+  }
+
+  static Future<GroupMessageModel?> sendGroupMessage(int groupId, String content) async {
+    try { final r = await http.post(Uri.parse('$baseUrl/groups/$groupId/messages'), headers: await _authenticatedHeaders(), body: jsonEncode({'content': content.trim()}));
+      if (r.statusCode == 200) return GroupMessageModel.fromJson(jsonDecode(r.body)); }
+    catch (e) { debugPrint('Error sending group message: $e'); }
     return null;
   }
 }

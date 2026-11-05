@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/event_model.dart';
@@ -7,6 +8,7 @@ import '../services/auth_state.dart';
 import '../utils/constants.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'login_screen.dart';
+import 'timetable_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,6 +28,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _isLoadingData = true;
   bool _isTogglingStatus = false;
+  Timer? _dashboardTimer;
+  final Set<int> _shownReminderEvents = {};
 
   @override
   void initState() {
@@ -40,8 +44,12 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     } else {
       _loadInitialData();
+      _dashboardTimer = Timer.periodic(const Duration(seconds: 30), (_) => _refreshDashboard());
     }
   }
+
+  @override
+  void dispose() { _dashboardTimer?.cancel(); super.dispose(); }
 
   Future<void> _loadInitialData() async {
     if (_user == null) return;
@@ -62,15 +70,42 @@ class _HomeScreenState extends State<HomeScreen> {
       _upcomingEvents = upcoming;
       _isLoadingData = false;
     });
+    _checkEventReminders([...today, ...upcoming]);
   }
 
-  Future<void> _toggleStatus() async {
+  Future<void> _refreshDashboard() async {
+    if (_user == null) return;
+    final results = await Future.wait([ApiService.getUser(_user!.id), ApiService.getTodayEvents(), ApiService.getUpcomingEvents()]);
+    if (!mounted) return;
+    final refreshedUser = results[0] as UserModel?;
+    final today = results[1] as List<EventModel>;
+    final upcoming = results[2] as List<EventModel>;
+    setState(() { if (refreshedUser != null) { _user = refreshedUser; AuthState().setUser(refreshedUser); } _todayEvents = today; _upcomingEvents = upcoming; });
+    _checkEventReminders([...today, ...upcoming]);
+  }
+
+  void _checkEventReminders(List<EventModel> events) {
+    final now = DateTime.now();
+    final userId = AuthState().currentUser?.id;
+    for (final event in events) {
+      if (event.userId != userId || event.reminderMinutesBefore == null || event.startTime == null || _shownReminderEvents.contains(event.id)) continue;
+      final parts = event.startTime!.split(':');
+      if (parts.length < 2) continue;
+      final starts = DateTime(event.eventDate.year, event.eventDate.month, event.eventDate.day, int.tryParse(parts[0]) ?? 0, int.tryParse(parts[1]) ?? 0);
+      final reminderAt = starts.subtract(Duration(minutes: event.reminderMinutesBefore!));
+      if (!now.isBefore(reminderAt) && now.isBefore(starts)) {
+        _shownReminderEvents.add(event.id);
+        if (mounted) showAppSnackBar(context, 'Reminder: ${event.title} starts in ${event.reminderMinutesBefore} minutes');
+      }
+    }
+  }
+
+  Future<void> _setAvailability(String status) async {
     if (_user == null || _isTogglingStatus) return;
 
     setState(() => _isTogglingStatus = true);
 
-    final newStatus = !_user!.isPresent;
-    final updated = await ApiService.updateStatus(_user!.id, newStatus);
+    final updated = await ApiService.updateAvailability(_user!.id, status);
 
     if (!mounted) return;
     setState(() {
@@ -80,10 +115,21 @@ class _HomeScreenState extends State<HomeScreen> {
         AuthState().setUser(updated);
         showAppSnackBar(
           context,
-          "Status changed to ${updated.isPresent ? 'PRESENT' : 'ABSENT'}",
+          "Status changed to ${updated.availabilityStatus.toUpperCase()}",
         );
       }
     });
+  }
+
+  void _showAvailabilityPicker() {
+    const statuses = ['Present', 'Absent', 'Available', 'Busy', 'In Class'];
+    showModalBottomSheet<void>(context: context, backgroundColor: AppConstants.cardColor, builder: (sheetContext) => SafeArea(
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const Padding(padding: EdgeInsets.all(16), child: Text('Set availability', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+        ...statuses.map((status) => ListTile(leading: Icon(Icons.circle, color: AppConstants.availabilityColor(status)), title: Text(status, style: const TextStyle(color: Colors.white)),
+          onTap: () { Navigator.pop(sheetContext); _setAvailability(status); })),
+      ]),
+    ));
   }
 
   /// Converts Google Drive shareable link to a direct viewable image link
@@ -393,17 +439,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Presence Toggle Button
           GestureDetector(
-            onTap: _toggleStatus,
+            onTap: _showAvailabilityPicker,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: _user!.isPresent
-                    ? AppConstants.accentGreen.withOpacity(0.18)
-                    : AppConstants.accentRed.withOpacity(0.18),
+                color: AppConstants.availabilityColor(_user!.availabilityStatus).withOpacity(0.18),
                 borderRadius: BorderRadius.circular(22),
                 border: Border.all(
-                  color: _user!.isPresent ? AppConstants.accentGreen : AppConstants.accentRed,
+                  color: AppConstants.availabilityColor(_user!.availabilityStatus),
                   width: 1.8,
                 ),
               ),
@@ -417,13 +461,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          _user!.isPresent ? Icons.check_circle : Icons.cancel,
-                          color: _user!.isPresent ? AppConstants.accentGreen : AppConstants.accentRed,
+                          Icons.circle,
+                          color: AppConstants.availabilityColor(_user!.availabilityStatus),
                           size: 18,
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          _user!.isPresent ? "PRESENT" : "ABSENT",
+                          _user!.availabilityStatus.toUpperCase(),
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -573,7 +617,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              "${e.time} • ${e.eventDate.day}/${e.eventDate.month}/${e.eventDate.year}",
+                              "${e.startTime?.substring(0, 5) ?? e.time}${e.endTime == null ? '' : '–${e.endTime!.substring(0, 5)}'} • ${e.eventDate.day}/${e.eventDate.month}/${e.eventDate.year}",
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.65),
                                 fontSize: 13,
@@ -618,6 +662,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.white,
                 ),
               ),
+              const Spacer(),
+              IconButton(tooltip: 'Manage weekly slots', icon: const Icon(Icons.edit_calendar, color: Colors.white70), onPressed: () => Navigator.push(
+                context, MaterialPageRoute(builder: (_) => TimetableScreen(userId: _user!.id, canEdit: true)),
+              )),
             ],
           ),
           const SizedBox(height: 16),

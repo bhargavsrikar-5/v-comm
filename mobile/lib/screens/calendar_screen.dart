@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../models/event_model.dart';
@@ -21,28 +22,37 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   List<EventModel> _allEvents = [];
   bool _isLoading = true;
+  Timer? _syncTimer;
 
   final _titleController = TextEditingController();
-  final _timeController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _startTimeController = TextEditingController();
+  final _endTimeController = TextEditingController();
+  String _visibility = 'PRIVATE';
+  int? _reminderMinutesBefore;
 
   @override
   void initState() {
     super.initState();
     _loadEvents();
+    _syncTimer = Timer.periodic(const Duration(seconds: 20), (_) => _loadEvents(silent: true));
   }
 
   @override
   void dispose() {
     _titleController.dispose();
-    _timeController.dispose();
+    _syncTimer?.cancel();
+    _descriptionController.dispose();
+    _startTimeController.dispose();
+    _endTimeController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadEvents() async {
+  Future<void> _loadEvents({bool silent = false}) async {
     final user = AuthState().currentUser;
     if (user == null) return;
 
-    setState(() => _isLoading = true);
+    if (!silent) setState(() => _isLoading = true);
     final events = await ApiService.getEvents();
 
     if (!mounted) return;
@@ -62,7 +72,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   void _showAddEventDialog() {
     _titleController.clear();
-    _timeController.clear();
+    _descriptionController.clear();
+    _startTimeController.text = '09:00';
+    _endTimeController.text = '10:00';
+    _visibility = 'PRIVATE';
+    _reminderMinutesBefore = null;
 
     showDialog(
       context: context,
@@ -73,15 +87,23 @@ class _CalendarScreenState extends State<CalendarScreen> {
           final user = AuthState().currentUser;
           if (user == null) return;
 
-          if (_titleController.text.trim().isEmpty || _timeController.text.trim().isEmpty) {
-            showAppSnackBar(context, "Please fill all fields", isError: true);
+          final endText = _endTimeController.text.trim();
+          if (_titleController.text.trim().isEmpty || !_validTime(_startTimeController.text) ||
+              (endText.isNotEmpty && !_validTime(endText)) ||
+              (endText.isNotEmpty && endText.compareTo(_startTimeController.text.trim()) <= 0)) {
+            showAppSnackBar(context, "Enter a title, a valid HH:mm start time, and an optional later end time", isError: true);
             return;
           }
 
           final newEvent = await ApiService.createEvent(
             title: _titleController.text.trim(),
-            time: _timeController.text.trim(),
+            time: endText.isEmpty ? _startTimeController.text.trim() : '${_startTimeController.text.trim()}-$endText',
             eventDate: _selectedDay,
+            description: _descriptionController.text,
+            startTime: _startTimeController.text.trim(),
+            endTime: endText.isEmpty ? null : endText,
+            visibility: _visibility,
+            reminderMinutesBefore: _reminderMinutesBefore,
           );
 
           if (dialogContext.mounted) {
@@ -102,7 +124,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   void _showEditEventDialog(EventModel event) {
     _titleController.text = event.title;
-    _timeController.text = event.time;
+    _descriptionController.text = event.description;
+    final legacyTimes = _legacyEventTimes(event.time);
+    _startTimeController.text = _eventTimeAs24Hour(event.startTime) ?? (legacyTimes.isNotEmpty ? legacyTimes.first : '');
+    _endTimeController.text = _eventTimeAs24Hour(event.endTime) ?? (legacyTimes.length > 1 ? legacyTimes[1] : '');
+    _visibility = event.visibility;
+    _reminderMinutesBefore = event.reminderMinutesBefore;
 
     showDialog(
       context: context,
@@ -113,16 +140,24 @@ class _CalendarScreenState extends State<CalendarScreen> {
           final user = AuthState().currentUser;
           if (user == null) return;
 
-          if (_titleController.text.trim().isEmpty || _timeController.text.trim().isEmpty) {
-            showAppSnackBar(context, "Please fill all fields", isError: true);
+          final endText = _endTimeController.text.trim();
+          if (_titleController.text.trim().isEmpty || !_validTime(_startTimeController.text) ||
+              (endText.isNotEmpty && !_validTime(endText)) ||
+              (endText.isNotEmpty && endText.compareTo(_startTimeController.text.trim()) <= 0)) {
+            showAppSnackBar(context, "Enter a title, a valid HH:mm start time, and an optional later end time", isError: true);
             return;
           }
 
           final updated = await ApiService.updateEvent(
             event.id,
             title: _titleController.text.trim(),
-            time: _timeController.text.trim(),
+            time: endText.isEmpty ? _startTimeController.text.trim() : '${_startTimeController.text.trim()}-$endText',
             eventDate: event.eventDate,
+            description: _descriptionController.text,
+            startTime: _startTimeController.text.trim(),
+            endTime: endText.isEmpty ? null : endText,
+            visibility: _visibility,
+            reminderMinutesBefore: _reminderMinutesBefore,
           );
 
           if (dialogContext.mounted) {
@@ -139,6 +174,31 @@ class _CalendarScreenState extends State<CalendarScreen> {
         },
       ),
     );
+  }
+
+  bool _validTime(String value) => RegExp(r'^([01]\d|2[0-3]):[0-5]\d$').hasMatch(value.trim());
+
+  List<String> _legacyEventTimes(String value) {
+    final matches = RegExp(r'(\d{1,2}):([0-5]\d)(?:\s*([AP]M))?', caseSensitive: false).allMatches(value);
+    return matches.map((match) {
+      var hour = int.parse(match.group(1)!);
+      final minute = match.group(2)!;
+      final meridian = match.group(3)?.toUpperCase();
+      if (meridian != null) {
+        if (hour < 1 || hour > 12) return '';
+        hour %= 12;
+        if (meridian == 'PM') hour += 12;
+      } else if (hour > 23) {
+        return '';
+      }
+      return '${hour.toString().padLeft(2, '0')}:$minute';
+    }).where((time) => time.isNotEmpty).toList();
+  }
+
+  String? _eventTimeAs24Hour(String? value) {
+    if (value == null) return null;
+    final times = _legacyEventTimes(value);
+    return times.isEmpty ? null : times.first;
   }
 
   void _confirmDeleteEvent(EventModel event) {
@@ -214,13 +274,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              "${event.time} • ${event.eventDate.day}/${event.eventDate.month}/${event.eventDate.year}",
+              "${event.startTime?.substring(0, 5) ?? event.time}${event.endTime == null ? '' : '–${event.endTime!.substring(0, 5)}'} • ${event.eventDate.day}/${event.eventDate.month}/${event.eventDate.year}",
               style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.7)),
             ),
             const SizedBox(height: 24),
 
+            if (event.description.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: 18), child: Text(event.description, style: TextStyle(color: Colors.white.withOpacity(0.72)))),
+
             // Edit Option
-            ListTile(
+            if (event.userId == AuthState().currentUser?.id) ListTile(
               leading: const Icon(Icons.edit_outlined, color: Colors.white),
               title: const Text("Edit Event", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -233,7 +295,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             const SizedBox(height: 12),
 
             // Delete Option
-            ListTile(
+            if (event.userId == AuthState().currentUser?.id) ListTile(
               leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
               title: const Text("Delete Event", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w500)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -273,10 +335,51 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
             const SizedBox(height: 16),
             CustomTextField(
-              controller: _timeController,
-              labelText: "Time",
-              hintText: "e.g. 10:00 AM - 11:30 AM",
+              controller: _descriptionController,
+              labelText: "Description",
+              hintText: "Optional event details",
+              prefixIcon: Icons.notes,
+            ),
+            const SizedBox(height: 12),
+            CustomTextField(
+              controller: _startTimeController,
+              labelText: "Start time (24-hour HH:mm)",
+              hintText: "09:00",
               prefixIcon: Icons.access_time,
+            ),
+            const SizedBox(height: 12),
+            CustomTextField(
+              controller: _endTimeController,
+              labelText: "End time (24-hour HH:mm, optional)",
+              hintText: "10:00",
+              prefixIcon: Icons.access_time,
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: _visibility,
+              dropdownColor: AppConstants.cardColor,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(labelText: 'Visibility', labelStyle: TextStyle(color: Colors.white70)),
+              items: const [
+                DropdownMenuItem(value: 'PRIVATE', child: Text('Only me')),
+                DropdownMenuItem(value: 'FACULTY', child: Text('All faculty')),
+              ],
+              onChanged: (value) { if (value != null) setState(() => _visibility = value); },
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int?>(
+              value: _reminderMinutesBefore,
+              dropdownColor: AppConstants.cardColor,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(labelText: 'In-app reminder', labelStyle: TextStyle(color: Colors.white70)),
+              items: const [
+                DropdownMenuItem<int?>(value: null, child: Text('No reminder')),
+                DropdownMenuItem<int?>(value: 5, child: Text('5 minutes before')),
+                DropdownMenuItem<int?>(value: 15, child: Text('15 minutes before')),
+                DropdownMenuItem<int?>(value: 30, child: Text('30 minutes before')),
+                DropdownMenuItem<int?>(value: 60, child: Text('1 hour before')),
+              ],
+              onChanged: (value) => setState(() => _reminderMinutesBefore = value),
             ),
           ],
         ),

@@ -4,6 +4,11 @@ class EventModel {
   final String title;
   final String time;
   final DateTime eventDate;
+  final String description;
+  final String? startTime;
+  final String? endTime;
+  final String visibility;
+  final int? reminderMinutesBefore;
 
   EventModel({
     required this.id,
@@ -11,6 +16,11 @@ class EventModel {
     required this.title,
     required this.time,
     required this.eventDate,
+    this.description = '',
+    this.startTime,
+    this.endTime,
+    this.visibility = 'PRIVATE',
+    this.reminderMinutesBefore,
   });
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
@@ -27,6 +37,13 @@ class EventModel {
       title: json['title'] ?? '',
       time: json['time'] ?? '',
       eventDate: parsedDate,
+      description: json['description'] ?? '',
+      startTime: json['startTime']?.toString(),
+      endTime: json['endTime']?.toString(),
+      visibility: json['visibility'] ?? 'PRIVATE',
+      reminderMinutesBefore: json['reminderMinutesBefore'] is int
+          ? json['reminderMinutesBefore'] as int
+          : int.tryParse(json['reminderMinutesBefore']?.toString() ?? ''),
     );
   }
 
@@ -37,6 +54,11 @@ class EventModel {
       'title': title,
       'time': time,
       'eventDate': "${eventDate.year.toString().padLeft(4, '0')}-${eventDate.month.toString().padLeft(2, '0')}-${eventDate.day.toString().padLeft(2, '0')}",
+      'description': description,
+      'startTime': startTime,
+      'endTime': endTime,
+      'visibility': visibility,
+      'reminderMinutesBefore': reminderMinutesBefore,
     };
   }
 }

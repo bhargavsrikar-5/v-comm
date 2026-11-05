@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/message_model.dart';
@@ -9,6 +10,7 @@ import '../utils/constants.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'chat_room_screen.dart';
 import 'search_screen.dart';
+import 'group_chat_screen.dart';
 
 class ChatHomeScreen extends StatefulWidget {
   const ChatHomeScreen({super.key});
@@ -20,18 +22,23 @@ class ChatHomeScreen extends StatefulWidget {
 class _ChatHomeScreenState extends State<ChatHomeScreen> {
   List<ConversationModel> _conversations = [];
   bool _isLoading = true;
+  Timer? _syncTimer;
 
   @override
   void initState() {
     super.initState();
     _loadConversations();
+    _syncTimer = Timer.periodic(const Duration(seconds: 8), (_) => _loadConversations(silent: true));
   }
 
-  Future<void> _loadConversations() async {
+  @override
+  void dispose() { _syncTimer?.cancel(); super.dispose(); }
+
+  Future<void> _loadConversations({bool silent = false}) async {
     final user = AuthState().currentUser;
     if (user == null) return;
 
-    setState(() => _isLoading = true);
+    if (!silent) setState(() => _isLoading = true);
     final convs = await ApiService.getConversations();
 
     if (!mounted) return;
@@ -79,6 +86,11 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
         ),
         centerTitle: true,
         actions: [
+          IconButton(
+            tooltip: 'Group chats',
+            icon: const Icon(Icons.groups_outlined, color: Colors.white),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GroupChatScreen())),
+          ),
           IconButton(
             icon: const Icon(Icons.search, color: Colors.white),
             tooltip: "Find Members to Chat",
