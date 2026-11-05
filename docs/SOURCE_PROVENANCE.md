@@ -19,7 +19,7 @@
 - An ARM64 Android APK.
 - The capstone report `V_COMM.pdf`.
 - The V-COMM feature presentation PDF/PPTX and mobile application review decks.
-- Separate Firebase admin panel HTML/CSS.
+- Separate Firebase admin panel HTML/CSS, preserved as a sanitized reference under `legacy/firebase-v1/admin-panel/`.
 
 ## Recovered local working-copy note
 
