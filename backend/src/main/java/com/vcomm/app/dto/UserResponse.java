@@ -13,6 +13,7 @@ public class UserResponse {
     private String photoUrl;
     private String timetableUrl;
     private boolean isPresent;
+    private String availabilityStatus;
     private UserRole role;
 
     public static UserResponse from(User user) {
@@ -26,6 +27,7 @@ public class UserResponse {
         response.photoUrl = user.getPhotoUrl();
         response.timetableUrl = user.getTimetableUrl();
         response.isPresent = user.getIsPresent();
+        response.availabilityStatus = user.getAvailabilityStatus().getLabel();
         response.role = user.getRole();
         return response;
     }
@@ -39,5 +41,6 @@ public class UserResponse {
     public String getPhotoUrl() { return photoUrl; }
     public String getTimetableUrl() { return timetableUrl; }
     public boolean getIsPresent() { return isPresent; }
+    public String getAvailabilityStatus() { return availabilityStatus; }
     public UserRole getRole() { return role; }
 }

@@ -41,4 +41,10 @@ public class AuthController {
         ApiResponse response = userService.changePassword(principal.userId(), request);
         return response.isSuccess() ? ResponseEntity.ok(response) : ResponseEntity.badRequest().body(response);
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse> logout(@AuthenticationPrincipal VCommPrincipal principal) {
+        userService.logout(principal.userId());
+        return ResponseEntity.ok(new ApiResponse(true, "Session revoked."));
+    }
 }

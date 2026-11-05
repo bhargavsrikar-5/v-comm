@@ -52,6 +52,7 @@ public class JwtService {
                     "sub", user.getId().toString(),
                     "email", user.getEmail(),
                     "role", user.getRole().name(),
+                    "ver", user.getTokenVersion(),
                     "iat", now.getEpochSecond(),
                     "exp", now.plusSeconds(expirationSeconds).getEpochSecond());
 
@@ -100,10 +101,11 @@ public class JwtService {
             Long userId = Long.valueOf(String.valueOf(claims.get("sub")));
             String email = String.valueOf(claims.get("email"));
             UserRole role = UserRole.valueOf(String.valueOf(claims.get("role")));
+            long tokenVersion = claims.get("ver") instanceof Number version ? version.longValue() : 0L;
             if (userId <= 0 || email.isBlank()) {
                 throw new IllegalArgumentException("Invalid token subject.");
             }
-            return new VCommPrincipal(userId, email, role);
+            return new VCommPrincipal(userId, email, role, tokenVersion);
         } catch (Exception exception) {
             throw new IllegalArgumentException("Invalid or expired bearer token.", exception);
         }

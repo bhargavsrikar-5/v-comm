@@ -8,9 +8,15 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
 
 @RestControllerAdvice
 public class RestExceptionHandler {
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse> handleAccessDenied(AccessDeniedException exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse(false, exception.getMessage()));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse> handleIllegalArgument(IllegalArgumentException exception) {
         return ResponseEntity.badRequest().body(new ApiResponse(false, exception.getMessage()));
