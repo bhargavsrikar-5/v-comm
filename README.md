@@ -4,7 +4,7 @@
 
 V-COMM is a three-member university group project. This unified repository brings together the newer Flutter + Spring Boot implementation and the earlier Firebase-era source as a feature reference. It preserves the team's contribution history rather than presenting the work as a solo project.
 
-> **Project status: migration candidate / working prototype source.** GitHub Actions run 6 verified the previously pushed baseline. The current local migration work adds group messaging, structured timetable slots, event details/reminder metadata, availability labels, configurable email-domain restrictions and token revocation, but this uncommitted source has not been built or tested. MySQL deployment, physical-device and full end-to-end verification remain outstanding. Media messaging, an integrated admin web UI, push notifications and several richer V1 message actions remain future work. Do not treat this repository as production-ready.
+> **Project status: consolidated integration merged to `main` through PR #2.** GitHub Actions run 9 passed backend tests, Flutter analysis and tests, Android debug build, and iOS simulator build on the PR head commit `84d4b5bb7f2f4565dde0dca1ccb2876930e7acd8`. These CI results do not replace a production deployment, physical-device walkthrough, or penetration test. Media messaging, an integrated admin web UI, push notifications and several richer V1 message actions remain outside the active implementation. Do not treat this repository as production-ready.
 
 ## Team
 
@@ -69,6 +69,8 @@ The old Firebase generation contains additional reference implementations for im
 ### 1. Configure and start the backend
 
 The backend requires a strong `JWT_SECRET` (at least 32 UTF-8 bytes). To enable the first administrator account, configure both `VCOMM_ADMIN_EMAIL` and `VCOMM_ADMIN_PASSWORD` (minimum 14 characters). No reusable demo credentials are committed.
+
+See [`backend/env.example`](backend/env.example) for the tracked backend environment-variable names and placeholder values. Supply real values through the process environment or a secret manager; do not put secrets in the example file.
 
 **PowerShell example:**
 
@@ -137,7 +139,7 @@ mvn test
 
 Run these commands to verify a local checkout. See [Baseline Verification](docs/BASELINE_VERIFICATION.md) for CI results and remaining verification gates.
 
-GitHub Actions run 6 tested the previously pushed baseline. It does not cover the current uncommitted migration changes. Run the commands above after the separate implementation handoff/testing phase; no test or build success is claimed for the current local changes.
+GitHub Actions run 9 passed backend tests, Flutter analysis and tests, Android debug build, and iOS simulator build on PR #2's head commit `84d4b5bb7f2f4565dde0dca1ccb2876930e7acd8`. The CI run predates the merge commit and does not verify a production deployment or physical-device behavior.
 
 ## Security and data migration
 
