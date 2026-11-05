@@ -23,18 +23,21 @@ Use the newer Flutter + Spring Boot + relational generation as the active applic
 - [x] Protect non-public endpoints and derive caller identity from the principal.
 - [x] Add FACULTY/ADMIN role and administrator faculty-provisioning API.
 - [x] Add owner checks for profiles, presence, timetable URL, search history, events and direct messages.
+- [x] Add configurable institutional email-domain checks; the deployment must supply approved domains and mailbox ownership is not verified.
+- [x] Revoke existing account tokens after password change or logout with a database token version.
 - [x] Restrict CORS by configured allow-list; disable H2 console by default; externalize secrets.
 - [x] Add initial unit tests for JWT verification and event ownership (test execution remains pending).
-- [ ] Add route-level authentication/admin authorization and cross-user data-isolation integration tests.
-- [ ] Add rate limiting, token revocation/refresh and security-event audit trail.
+- [ ] Add route-level authentication/admin authorization and cross-user data-isolation integration tests for the current changes.
+- [ ] Add rate limiting, a refresh-token/session-management design and security-event audit trail.
 
 ## Stage 2 — Database and domain model
 
 - [x] Define normalized initial MySQL schema and Flyway migration.
-- [ ] Add conversation and group membership entities.
+- [x] Add group chat, membership-role and group-message entities with read-time markers.
+- [x] Add structured weekly timetable slots and additive event fields for description, local start/end time, visibility and reminder lead time.
 - [ ] Add message type, attachment metadata, reply/forward relationships and timestamps.
 - [ ] Add per-user message reaction, pin/star and chat archive/delete state.
-- [ ] Define event time zone and timetable storage metadata.
+- [ ] Define explicit event time-zone behavior; current events use local date/time values without a zone.
 - [ ] Add pagination and performance indexes for chat history/conversations.
 - [ ] Design a safe account/data migration from the older database; never carry plaintext passwords forward.
 
@@ -49,13 +52,14 @@ Use the newer Flutter + Spring Boot + relational generation as the active applic
 
 ## Stage 4 — Restore the V1 communication experience
 
-- [ ] Group creation, member management and role checks.
+- [x] Group creation, member management and server-side group/platform administrator checks (runtime verification pending).
 - [ ] Rich text/image/file messages.
 - [ ] Reply, forward, reactions, edit and deletion semantics.
 - [ ] Pin/star and per-user archive state.
 - [ ] Unread counts/read receipts tests and pagination.
-- [ ] Real-time delivery (WebSocket/SSE or a documented polling alternative).
-- [ ] End-to-end notification flow and persisted user preferences.
+- [x] Document and implement polling as the current synchronization strategy for direct and group messages; latency/offline behavior remain limited.
+- [x] Add a foreground-only in-app event reminder prompt; OS/background/push reminders remain absent.
+- [ ] End-to-end push/background notification flow and persisted user preferences.
 
 ## Stage 5 — Administration and quality
 

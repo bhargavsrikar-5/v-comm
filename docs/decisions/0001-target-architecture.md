@@ -15,6 +15,6 @@ Use the later Flutter + Spring Boot code as the active starting point. Keep Fire
 
 - The active client uses numeric relational IDs and bearer-authenticated REST calls.
 - The active backend uses BCrypt hashes, JWT authentication, role checks and owner-scoped services.
-- Group messaging, media, richer message actions and notifications require new relational/API design.
+- The current implementation adds a separate group-chat/membership/message model and REST API. A unified conversation model, media, richer message actions and push/background notifications remain future design decisions.
 - The original Firebase rules were not supplied for verification; historical Firebase deployment must not be assumed secure.
 - The active source remains a prototype until builds, tests, data-migration rehearsal and security review pass.
