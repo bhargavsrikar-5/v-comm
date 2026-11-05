@@ -8,6 +8,7 @@ class UserModel {
   final String? photoUrl;
   final String? timetableUrl;
   final bool isPresent;
+  final String availabilityStatus;
 
   UserModel({
     required this.id,
@@ -19,6 +20,7 @@ class UserModel {
     this.photoUrl,
     this.timetableUrl,
     required this.isPresent,
+    this.availabilityStatus = 'Absent',
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class UserModel {
       photoUrl: json['photoUrl'],
       timetableUrl: json['timetableUrl'],
       isPresent: json['isPresent'] ?? false,
+      availabilityStatus: json['availabilityStatus'] ?? ((json['isPresent'] ?? false) ? 'Present' : 'Absent'),
     );
   }
 
@@ -46,6 +49,7 @@ class UserModel {
       'photoUrl': photoUrl,
       'timetableUrl': timetableUrl,
       'isPresent': isPresent,
+      'availabilityStatus': availabilityStatus,
     };
   }
 
@@ -59,6 +63,7 @@ class UserModel {
     String? photoUrl,
     String? timetableUrl,
     bool? isPresent,
+    String? availabilityStatus,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -70,6 +75,7 @@ class UserModel {
       photoUrl: photoUrl ?? this.photoUrl,
       timetableUrl: timetableUrl ?? this.timetableUrl,
       isPresent: isPresent ?? this.isPresent,
+      availabilityStatus: availabilityStatus ?? this.availabilityStatus,
     );
   }
 }

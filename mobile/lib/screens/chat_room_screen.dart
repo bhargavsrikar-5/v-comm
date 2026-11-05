@@ -153,12 +153,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         height: 7,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: widget.otherUser.isPresent ? AppConstants.accentGreen : AppConstants.accentRed,
+                          color: AppConstants.availabilityColor(widget.otherUser.availabilityStatus),
                         ),
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        widget.otherUser.isPresent ? "Online / Present" : "Absent",
+                        widget.otherUser.availabilityStatus,
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.6),
                           fontSize: 11,
@@ -253,6 +253,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                           color: Colors.white.withOpacity(0.4),
                                           fontSize: 10,
                                         ),
+                                      ),
+                                      if (isMe) Padding(
+                                        padding: const EdgeInsets.only(top: 2),
+                                        child: Icon(msg.isRead ? Icons.done_all : Icons.done, size: 13,
+                                          color: msg.isRead ? Colors.lightBlueAccent : Colors.white38),
                                       ),
                                     ],
                                   ),

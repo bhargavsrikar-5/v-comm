@@ -106,7 +106,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                       if (!mounted) return;
                       if (res['success'] == true) {
-                        showAppSnackBar(context, "Password changed successfully!");
+                        await AuthState().logout();
+                        if (!mounted) return;
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (context) => const LoginScreen()),
+                          (route) => false,
+                        );
                       } else {
                         setDialogState(() => isSubmitting = false);
                         showAppSnackBar(context, res['message'] ?? "Failed to change password", isError: true);
@@ -173,6 +179,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _handleLogout() async {
+    await ApiService.logout();
     await AuthState().logout();
     if (!mounted) return;
     showAppSnackBar(context, "Logged out successfully");

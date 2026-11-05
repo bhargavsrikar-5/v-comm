@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/search_history_model.dart';
@@ -23,26 +24,29 @@ class _SearchScreenState extends State<SearchScreen> {
   List<SearchHistoryModel> _searchHistory = [];
 
   bool _isLoading = true;
+  Timer? _syncTimer;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _syncTimer = Timer.periodic(const Duration(seconds: 20), (_) => _loadData(silent: true));
     _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
     _searchController.removeListener(_onSearchChanged);
+    _syncTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData({bool silent = false}) async {
     final user = AuthState().currentUser;
     if (user == null) return;
 
-    setState(() => _isLoading = true);
+    if (!silent) setState(() => _isLoading = true);
 
     final users = await ApiService.searchUsers();
     final history = await ApiService.getSearchHistory(user.id);
@@ -52,7 +56,8 @@ class _SearchScreenState extends State<SearchScreen> {
       // Exclude current user from member directory
       _allUsers = users.where((u) => u.id != user.id).toList();
       _searchHistory = history;
-      _searchResults = _allUsers;
+      final query = _searchController.text.trim().toLowerCase();
+      _searchResults = query.isEmpty ? _allUsers : _allUsers.where((u) => u.name.toLowerCase().contains(query) || u.dept.toLowerCase().contains(query) || u.customId.toLowerCase().contains(query)).toList();
       _isLoading = false;
     });
   }
@@ -341,19 +346,17 @@ class _SearchScreenState extends State<SearchScreen> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                             decoration: BoxDecoration(
-                                              color: user.isPresent
-                                                  ? AppConstants.accentGreen.withOpacity(0.15)
-                                                  : AppConstants.accentRed.withOpacity(0.15),
+                                              color: AppConstants.availabilityColor(user.availabilityStatus).withOpacity(0.15),
                                               borderRadius: BorderRadius.circular(12),
                                               border: Border.all(
-                                                color: user.isPresent ? AppConstants.accentGreen : AppConstants.accentRed,
+                                                color: AppConstants.availabilityColor(user.availabilityStatus),
                                                 width: 1.2,
                                               ),
                                             ),
                                             child: Text(
-                                              user.isPresent ? "PRESENT" : "ABSENT",
+                                              user.availabilityStatus.toUpperCase(),
                                               style: TextStyle(
-                                                color: user.isPresent ? AppConstants.accentGreen : AppConstants.accentRed,
+                                                color: AppConstants.availabilityColor(user.availabilityStatus),
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 10,
                                               ),

@@ -44,6 +44,13 @@ public class User {
     @Column(name = "is_present")
     private Boolean isPresent = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "availability_status", nullable = false, length = 20)
+    private AvailabilityStatus availabilityStatus = AvailabilityStatus.ABSENT;
+
+    @Column(name = "token_version", nullable = false)
+    private Long tokenVersion = 0L;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -84,7 +91,17 @@ public class User {
     public String getTimetableUrl() { return timetableUrl; }
     public void setTimetableUrl(String timetableUrl) { this.timetableUrl = timetableUrl; }
     public Boolean getIsPresent() { return isPresent != null ? isPresent : false; }
-    public void setIsPresent(Boolean present) { isPresent = present; }
+    public void setIsPresent(Boolean present) {
+        isPresent = present;
+        if (present != null) availabilityStatus = present ? AvailabilityStatus.PRESENT : AvailabilityStatus.ABSENT;
+    }
+    public AvailabilityStatus getAvailabilityStatus() { return availabilityStatus == null ? (getIsPresent() ? AvailabilityStatus.PRESENT : AvailabilityStatus.ABSENT) : availabilityStatus; }
+    public void setAvailabilityStatus(AvailabilityStatus status) {
+        availabilityStatus = status;
+        isPresent = status == AvailabilityStatus.PRESENT || status == AvailabilityStatus.AVAILABLE || status == AvailabilityStatus.IN_CLASS;
+    }
+    public Long getTokenVersion() { return tokenVersion == null ? 0L : tokenVersion; }
+    public void setTokenVersion(Long tokenVersion) { this.tokenVersion = tokenVersion; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

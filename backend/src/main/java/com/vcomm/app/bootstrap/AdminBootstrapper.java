@@ -11,6 +11,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import com.vcomm.app.security.InstitutionalEmailPolicy;
 
 @Component
 public class AdminBootstrapper implements ApplicationRunner {
@@ -21,17 +22,20 @@ public class AdminBootstrapper implements ApplicationRunner {
     private final String email;
     private final String password;
     private final String name;
+    private final InstitutionalEmailPolicy emailPolicy;
 
     public AdminBootstrapper(UserRepository userRepository,
                              PasswordEncoder passwordEncoder,
                              @Value("${vcomm.bootstrap.admin-email:}") String email,
                              @Value("${vcomm.bootstrap.admin-password:}") String password,
-                             @Value("${vcomm.bootstrap.admin-name:V-COMM Administrator}") String name) {
+                             @Value("${vcomm.bootstrap.admin-name:V-COMM Administrator}") String name,
+                             InstitutionalEmailPolicy emailPolicy) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.email = email == null ? "" : email.trim().toLowerCase();
         this.password = password == null ? "" : password;
         this.name = name == null || name.isBlank() ? "V-COMM Administrator" : name.trim();
+        this.emailPolicy = emailPolicy;
     }
 
     @Override
@@ -44,6 +48,7 @@ public class AdminBootstrapper implements ApplicationRunner {
         if (email.isBlank() || password.length() < 14) {
             throw new IllegalStateException("Configure both VCOMM_ADMIN_EMAIL and a VCOMM_ADMIN_PASSWORD of at least 14 characters.");
         }
+        emailPolicy.requireAllowed(email);
         if (userRepository.existsByEmail(email)) {
             log.info("Configured bootstrap administrator already exists; no account changes were made.");
             return;

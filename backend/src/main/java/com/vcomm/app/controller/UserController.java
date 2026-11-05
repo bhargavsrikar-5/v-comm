@@ -4,6 +4,7 @@ import com.vcomm.app.dto.ApiResponse;
 import com.vcomm.app.dto.UserResponse;
 import com.vcomm.app.dto.UserUpdateRequest;
 import com.vcomm.app.model.SearchHistory;
+import com.vcomm.app.model.AvailabilityStatus;
 import com.vcomm.app.security.VCommPrincipal;
 import com.vcomm.app.service.UserService;
 import jakarta.validation.Valid;
@@ -44,9 +45,14 @@ public class UserController {
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateStatus(@PathVariable Long id,
                                            @AuthenticationPrincipal VCommPrincipal principal,
-                                           @RequestBody(required = false) Map<String, Boolean> body) {
+                                           @RequestBody(required = false) Map<String, Object> body) {
         if (!id.equals(principal.userId())) return ResponseEntity.status(403).body(new ApiResponse(false, "You can only update your own presence."));
-        Boolean isPresent = body != null && body.containsKey("isPresent") ? body.get("isPresent") : null;
+        if (body != null && body.get("status") != null) {
+            return userService.updateAvailability(id, AvailabilityStatus.fromLabel(String.valueOf(body.get("status"))))
+                    .map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        }
+        Object value = body == null ? null : body.get("isPresent");
+        Boolean isPresent = value instanceof Boolean present ? present : null;
         return userService.updateStatus(id, isPresent).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 

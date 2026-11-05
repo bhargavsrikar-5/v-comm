@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/user_model.dart';
 import '../screens/chat_room_screen.dart';
 import '../utils/constants.dart';
+import '../screens/timetable_screen.dart';
 
 class UserDetailsModal extends StatelessWidget {
   final UserModel user;
@@ -75,10 +76,10 @@ class UserDetailsModal extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: user.isPresent ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
+              color: AppConstants.availabilityColor(user.availabilityStatus).withOpacity(0.2),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: user.isPresent ? Colors.green : Colors.red,
+                color: AppConstants.availabilityColor(user.availabilityStatus),
                 width: 1.5,
               ),
             ),
@@ -86,15 +87,15 @@ class UserDetailsModal extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  user.isPresent ? Icons.check_circle : Icons.cancel,
-                  color: user.isPresent ? Colors.green : Colors.red,
+                  Icons.circle,
+                  color: AppConstants.availabilityColor(user.availabilityStatus),
                   size: 18,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  user.isPresent ? "CURRENTLY PRESENT" : "CURRENTLY ABSENT",
+                  user.availabilityStatus.toUpperCase(),
                   style: TextStyle(
-                    color: user.isPresent ? Colors.green : Colors.red,
+                    color: AppConstants.availabilityColor(user.availabilityStatus),
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
@@ -103,6 +104,12 @@ class UserDetailsModal extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
+
+          SizedBox(width: double.infinity, child: OutlinedButton.icon(
+            onPressed: () { final navigator = Navigator.of(context); navigator.pop(); navigator.push(MaterialPageRoute(builder: (_) => TimetableScreen(userId: user.id))); },
+            icon: const Icon(Icons.calendar_view_week), label: const Text('View weekly timetable'),
+          )),
+          const SizedBox(height: 12),
 
           // Contact Details Container
           Container(

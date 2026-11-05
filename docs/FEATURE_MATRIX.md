@@ -1,43 +1,27 @@
-# Feature verification matrix
+# Feature implementation matrix
 
-Status definitions:
+This matrix describes source-level implementation on `vcomm/requirements-completion`. The current local changes have not been built, tested, or exercised against a running database/API. “Implemented in source” means the route, service, model and relevant Flutter call path are present; it is not a runtime pass.
 
-- **Present in active source** — corresponding code exists in the unified Flutter/API source; runtime behavior is not independently verified here.
-- **Legacy reference only** — available in the older Firebase source but not integrated into the active Spring Boot API.
-- **Partial / not verified** — source implementation exists but requires additional integration, automated tests or operational setup.
-- **Not implemented** — not found in the active source baseline.
-
-| Feature | Firebase V1 source | Active Spring Boot candidate | Current assessment |
+| Feature | Active implementation | Status / limits | Firebase-era reference |
 |---|---|---|---|
-| Faculty sign-in | Firebase Authentication | Login + BCrypt + JWT + secure token storage | Backend auth and authorization tests passed in GitHub Actions run 6; full mobile/device sign-in flow remains unverified |
-| Public registration | Admin-provisioned accounts | Public endpoint returns 403; admin provisioning API | Admin API present; integrated admin UI absent |
-| Password recovery | Firebase reset-email flow | Not found | Not implemented |
-| Change password | Profile flow | Authenticated API | Present in source; token revocation is not implemented |
-| Faculty profile | Profile/edit screens | Profile/edit screens + DTO-backed API | HTTP profile ownership tests passed in GitHub Actions run 6; full Flutter-to-API flow remains unverified |
-| Faculty directory/search | Firestore search UI | Authenticated search API + Flutter screen | Present in source; pagination absent |
-| Recent search history | Firestore profile history | Authenticated owner-scoped API/model | Present in source; runtime verification pending |
-| Present/absent status | Firestore status update | Owner-scoped API + Flutter UI | Present in source |
-| Timetable view/link | Drive link and zoomable viewer | URL field and profile/home support | Partial; secure file upload not implemented |
-| Timetable image upload | Firebase Storage in local snapshot | Not found as object upload | Legacy reference only |
-| Calendar | Firestore stream + calendar UI | Calendar screen + event API | Present in source; H2/MySQL runtime tests pending |
-| Event create/edit/delete | Firestore CRUD | Owner-scoped event API CRUD | Present in source |
-| Today/upcoming dashboard | Local snapshot | Home screen + today/upcoming endpoints | Present in source |
-| One-to-one text chat | Firestore streams | Authenticated REST API + Flutter screen | Present in source; client polling, no push transport |
-| Unread counts/read markers | Firestore counters | API count + mark-read behavior | Present in source; concurrency/performance tests pending |
-| Group chats | Group create/member management | No group/conversation tables or routes | Legacy reference only |
-| Image/media messages | Firebase Storage + picker | Not found | Legacy reference only |
-| Replies/forwarding | Message metadata/UI | Not found | Legacy reference only |
-| Reactions | Message metadata/UI | Not found | Legacy reference only |
-| Pin/star messages | Message metadata/UI | Not found | Legacy reference only |
-| Edit/delete message | Sender actions in V1 | Not found | Legacy reference only |
-| Archive chat/filtering | V1 filters and per-user state | Not found | Legacy reference only |
-| Local reminders | Scheduler in recovered snapshot; no call sites found | Not found | Not integrated / unverified |
-| Push notifications | Cloud Function topic send; client topic subscription not found | Not found | Not end-to-end verified |
-| Notification preferences | UI toggle had TODO save action | Not found | Not implemented persistently |
-| Admin user panel | Separate Firebase HTML panel | Protected admin API only | Admin UI not integrated; endpoint requires ADMIN role |
-| Role-based access control | Firebase rules need separate verification | FACULTY/ADMIN roles + Spring Security | HTTP role authorization tests passed in CI; broader admin workflows remain unverified |
-| Backend security/ownership tests | Firebase rules not available for automated review | JWT signature/claims/config and HTTP ownership tests | GitHub Actions run 6 passed JWT, login, password-change, admin-role, profile/search-history ownership and cross-user event isolation tests |
+| Institutional email domain policy | `InstitutionalEmailPolicy` gates login, faculty provisioning and configured bootstrap admin email using `VCOMM_ALLOWED_EMAIL_DOMAINS` | Implemented when configured; blank configuration permits any syntactically accepted email. No mailbox verification or password-recovery flow. | Firebase Auth email/password and reset email |
+| Login and session | BCrypt credentials, HS256 JWT, DB-backed token version; password change and logout increment version; Flutter stores token securely and clears it locally | Implemented in source; invalidation and app restoration not runtime-verified. No refresh token or account lockout. | Firebase Authentication |
+| Profile viewing/editing | Authenticated user DTO/API and Flutter profile/detail screens | Existing source feature; full mobile flow unverified. Profile and timetable URL data is visible to authenticated faculty under existing APIs. | Profile and contact details |
+| Faculty directory/search | Authenticated search API, Flutter client-side filtering and recent-search history | Present in source; no pagination and no runtime verification. | Firestore faculty lookup/search history |
+| Availability | Own-user API accepts Present, Absent, Available, Busy and In Class; Flutter displays and updates those labels; legacy `isPresent` remains | Implemented in source; historical rows are backfilled to Present/Absent. Semantics of the legacy boolean for Busy/Available/In Class remain compatibility-only. | Presence/status fields |
+| Timetable URL/image reference | Existing profile URL and image viewer retained; URL updates require HTTPS | Present in source; hosted timetable image storage is not integrated. | Drive link and Firebase Storage upload |
+| Structured weekly timetable | Per-user weekday/course/activity/time slots; create/update/delete owner-scoped, overlap validation, faculty viewing; Flutter editor/viewer | Implemented in source; cross-user visibility is available to authenticated users. Concurrency, data migration and runtime behavior unverified. | Timetable display/upload |
+| Calendar and events | Owner-scoped create/edit/delete; description, date, local start/end time, PRIVATE/FACULTY visibility; own and faculty-visible events listed | Implemented in source. Historical free-text event times are retained; edit UI parses common legacy clock formats. Time zone is not modeled. | Calendar and event CRUD |
+| Event reminders | Reminder lead time is stored; home screen polls and shows an in-app prompt for the owner's upcoming event | Partial: only while the home screen is active; no background scheduling, OS notification or push delivery. | Recovered scheduler exists, but legacy call sites were not established |
+| Direct messages | Authenticated one-to-one text API, conversation list, unread counts, history marks incoming messages read; Flutter polls open history | Implemented in source; polling rather than push/WebSocket; no pagination. Runtime synchronization unverified. | Firestore direct chat |
+| Group messaging | Group create/list, membership, creator-as-admin, server-side group-admin/platform-admin membership management, text history/send, unread and read-time marker; Flutter group UI polls | Implemented in source; no group deletion/ownership transfer, pagination or runtime verification. | Firebase group chat and member management |
+| Message delivery/read synchronization | Direct messages refresh every 3 seconds and group history every 3 seconds; conversation/group summaries poll; read flags/markers surface in UI | Partial, polling can delay updates and has no offline queue or push delivery. Group read marker is a timestamp, not per-message receipt. | Firestore streams and notification helpers |
+| Media and rich message actions | No active attachment or action API | Missing from active source; reply, forward, reactions, edit/delete, pin/star, archive and delete-for-self are presentation/legacy features, not approved implementation scope here. | Legacy Firebase reference only |
+| Notifications | No end-to-end push flow or persisted notification preference | Missing. Event reminder is limited to foreground in-app prompt. | Legacy Cloud Function topic sender has no verified matching client subscription |
+| Admin | Admin-only faculty provisioning API; platform administrators can manage group membership through API | Source present; no integrated admin UI, audit trail, or runtime authorization verification for new group routes. | Legacy admin HTML reference |
+| Transport/privacy | Release Flutter client requires HTTPS; authenticated access, owner checks, group membership checks, configurable CORS and environment secrets | Source policy present; deployment must terminate TLS correctly. No end-to-end encryption is implemented or claimed. Rate limiting and penetration testing remain outstanding. | Firestore rules were not available for verification |
+| Password recovery | No active recovery endpoint or mail delivery integration | Not implemented; presentation-only claim, not inferred as mandatory core behavior. | Firebase reset-email UI |
 
-## Verification note
+## Verification boundary
 
-This matrix combines static inspection with GitHub Actions run 6, which passed Maven tests, Flutter analysis/tests and the Android debug APK build. The iOS simulator build passed in run 3; its run 6 job remains queued. MySQL deployment, physical-device walkthrough, live Firebase inspection and full end-to-end testing remain outstanding. Source presence is not equivalent to full feature verification.
+GitHub Actions run 6 refers to the previously pushed source baseline. It does not include the current uncommitted implementation. No build, test, database migration or runtime result is claimed for the current local changes. See [Baseline Verification](BASELINE_VERIFICATION.md) and [API Contract](API_CURRENT.md).

@@ -4,7 +4,7 @@
 
 V-COMM is a three-member university group project. This unified repository brings together the newer Flutter + Spring Boot implementation and the earlier Firebase-era source as a feature reference. It preserves the team's contribution history rather than presenting the work as a solo project.
 
-> **Project status: migration candidate / working prototype source.** GitHub Actions run 6 passed the Maven backend tests, Flutter analysis/tests and Android debug APK build. The iOS simulator build remains queued in run 6; it passed in run 3. MySQL deployment, physical-device and full end-to-end verification remain outstanding. Group messaging, media messaging, an integrated admin web UI, notifications and several richer V1 message actions remain future work. Do not treat this repository as production-ready.
+> **Project status: migration candidate / working prototype source.** GitHub Actions run 6 verified the previously pushed baseline. The current local migration work adds group messaging, structured timetable slots, event details/reminder metadata, availability labels, configurable email-domain restrictions and token revocation, but this uncommitted source has not been built or tested. MySQL deployment, physical-device and full end-to-end verification remain outstanding. Media messaging, an integrated admin web UI, push notifications and several richer V1 message actions remain future work. Do not treat this repository as production-ready.
 
 ## Team
 
@@ -49,12 +49,13 @@ v-comm/
 
 - Faculty sign-in with a server-issued bearer token.
 - Faculty directory search and profile viewing/editing.
-- Present/absent status and timetable URL reference.
-- Event calendar with create, update, delete, today and upcoming views.
-- One-to-one text messages, conversation list, unread counts and read markers (client refreshes/polls; no WebSocket transport yet).
+- Availability labels: Present, Absent, Available, Busy and In Class.
+- Timetable URL reference plus structured weekly course/activity slots with owner-scoped editing and faculty viewing.
+- Calendar events with descriptions, start/end times, private or faculty visibility, owner-scoped create/update/delete and reminder metadata. Reminders currently appear only in-app while the home screen is open.
+- One-to-one and group text messages, group membership administration, unread counts and read markers. Clients refresh/poll; there is no WebSocket/SSE transport.
 - Admin-only faculty account provisioning API.
 
-The old Firebase generation contains additional reference implementations for group chats, image/media messages, replies, forwarding, reactions, pin/star, archive and notification-related behavior. These are **not** integrated into the active Spring Boot application yet. See [Feature Matrix](docs/FEATURE_MATRIX.md).
+The old Firebase generation contains additional reference implementations for image/media messages, replies, forwarding, reactions, pin/star, archive and notification-related behavior. These are **not** integrated into the active Spring Boot application. See [Feature Matrix](docs/FEATURE_MATRIX.md).
 
 ## Local setup
 
@@ -76,6 +77,8 @@ $env:JWT_SECRET = [Convert]::ToBase64String([System.Security.Cryptography.Random
 $env:VCOMM_ADMIN_EMAIL = "admin@example.edu"
 $env:VCOMM_ADMIN_PASSWORD = "REPLACE-WITH-A-UNIQUE-14-CHARACTER-OR-LONGER-PASSWORD"
 $env:VCOMM_ADMIN_NAME = "V-COMM Administrator"
+# Optional comma-separated institution-approved email domains; no domain is assumed by the source.
+$env:VCOMM_ALLOWED_EMAIL_DOMAINS = "example.edu"
 cd backend
 mvn spring-boot:run
 ```
@@ -87,11 +90,12 @@ export JWT_SECRET="$(openssl rand -base64 48)"
 export VCOMM_ADMIN_EMAIL="admin@example.edu"
 export VCOMM_ADMIN_PASSWORD="REPLACE-WITH-A-UNIQUE-14-CHARACTER-OR-LONGER-PASSWORD"
 export VCOMM_ADMIN_NAME="V-COMM Administrator"
+export VCOMM_ALLOWED_EMAIL_DOMAINS="example.edu"
 cd backend
 mvn spring-boot:run
 ```
 
-The API listens on `http://localhost:8080/api`. H2 is in-memory and data is lost when the backend stops. For MySQL, set `DB_URL`, `DB_DRIVER=com.mysql.cj.jdbc.Driver`, `DB_USERNAME` and `DB_PASSWORD` before starting the API. Keep credentials in your local environment or secret manager, never in Git.
+The API listens on `http://localhost:8080/api` for local development. H2 is in-memory and data is lost when the backend stops. For MySQL, set `DB_URL`, `DB_DRIVER=com.mysql.cj.jdbc.Driver`, `DB_USERNAME` and `DB_PASSWORD` before starting the API. Keep credentials in your local environment or secret manager, never in Git. Set `VCOMM_ALLOWED_EMAIL_DOMAINS` to institution-approved domains in deployed environments; an empty value deliberately does not guess or enforce an institutional domain. This is a domain allow-list, not email ownership verification.
 
 The first admin account is provisioned at startup only when the environment variables are configured and the email is not already present. Use the admin bearer token to create faculty accounts through `POST /api/admin/users`. There is currently **no integrated admin web UI**; the endpoint can be exercised with an API client (for example, Postman or `curl`).
 
@@ -113,8 +117,11 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080/api
 # iOS simulator / browser / desktop on the same host
 flutter run --dart-define=API_BASE_URL=http://localhost:8080/api
 
-# Physical Android/iOS device: replace the host with your development machine's LAN IP
+# For local debug only, physical Android/iOS device: replace the host with your development machine's LAN IP
 flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8080/api
+
+# Release builds require an HTTPS API URL
+flutter build apk --release --dart-define=API_BASE_URL=https://api.example.edu/api
 ```
 
 The Flutter client stores its access token using `flutter_secure_storage` and attaches it as a Bearer token to authenticated API calls. Browser CORS origins are configured separately through `APP_CORS_ALLOWED_ORIGINS`.
@@ -130,20 +137,23 @@ mvn test
 
 Run these commands to verify a local checkout. See [Baseline Verification](docs/BASELINE_VERIFICATION.md) for CI results and remaining verification gates.
 
-The backend unit and HTTP integration tests cover JWT verification, login, password changes, role-protected admin access, profile/search-history ownership and event ownership. They passed in GitHub Actions run 6.
+GitHub Actions run 6 tested the previously pushed baseline. It does not cover the current uncommitted migration changes. Run the commands above after the separate implementation handoff/testing phase; no test or build success is claimed for the current local changes.
 
 ## Security and data migration
 
 - Passwords are stored as BCrypt hashes in `password_hash`; user API responses use `UserResponse` DTOs.
 - Non-public endpoints require a valid Bearer token; the acting user is derived from the authenticated principal for user-owned actions.
 - Admin routes require the `ADMIN` role.
+- Password change and logout increment a database token version, invalidating all existing access tokens for that account on the next request. There is no refresh-token flow.
+- Set `VCOMM_ALLOWED_EMAIL_DOMAINS` from institutional configuration to restrict login, faculty provisioning and bootstrap admin email domains. The application does not verify mailbox ownership or provide password recovery.
+- Configure the deployed API behind HTTPS. The Flutter release client refuses a non-HTTPS API URL; local HTTP is restricted to debug builds and local hosts.
 - JWT signing secret, admin bootstrap credentials and database credentials are environment-supplied.
 - H2 console is disabled by default; do not enable it on an exposed network.
 - The Flyway schema is for a **new unified database**. It does not automatically convert an older V2 plaintext-password database. Re-provision faculty accounts with password resets; do not copy old plaintext passwords into the new schema.
 - Previously committed Android signing keystores in old repositories must be treated as exposed. They are not included here.
 - Legacy Firebase config/rules were not supplied as a complete deployable set. Do not re-add old service config or assume Firestore/Storage security rules are safe.
 
-See [Security Review](docs/SECURITY_AUDIT.md) and [SECURITY.md](SECURITY.md). This work has not been penetration-tested.
+Events support private or faculty visibility; timetable slots and group content require authentication, with group membership and administrator checks enforced by the API. Direct and group chat synchronization use polling. Transport security relies on HTTPS in deployment; end-to-end encryption is not implemented or claimed. See [Security Review](docs/SECURITY_AUDIT.md) and [SECURITY.md](SECURITY.md). This work has not been penetration-tested.
 
 ## Licence and redistribution
 

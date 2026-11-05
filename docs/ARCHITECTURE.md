@@ -13,14 +13,15 @@ flowchart TD
     S --> R[Spring Data JPA repositories]
     R --> D[(MySQL / local H2)]
     AD[Admin API client - no integrated UI yet] -->|ADMIN role token| A
-    A -. future .-> N[Notification provider]
+    A --> G[Group membership + group text]
+    A --> T[Weekly timetable slots + events]
+    A -. future .-> N[Push / background notifications]
     A -. future .-> F[Media/object storage]
-    A -. future .-> RT[Group / real-time messaging]
 ```
 
 ## Mobile client
 
-`mobile/` contains the active Flutter app: sign-in, home/dashboard, faculty search, profile editing, calendar/events and one-to-one text chat. API calls are centralized in `mobile/lib/services/api_service.dart`. Access tokens are stored through `flutter_secure_storage`; authenticated requests attach an `Authorization: Bearer` header. The API base URL is configurable via `--dart-define=API_BASE_URL=...`.
+`mobile/` contains the active Flutter app: sign-in, home/dashboard, faculty search, profile editing, calendar/events, structured timetable editing/viewing, one-to-one chat and group text chat. API calls are centralized in `mobile/lib/services/api_service.dart`. Access tokens are stored through `flutter_secure_storage`; authenticated requests attach an `Authorization: Bearer` header. The API base URL is configurable via `--dart-define=API_BASE_URL=...`; release clients require HTTPS while debug accepts local HTTP hosts.
 
 ## Backend
 
@@ -34,12 +35,13 @@ flowchart TD
 - `security/` — JWT issuance, verification, principal and bearer filter.
 - `config/` — Spring Security, CORS and exception handling.
 - `bootstrap/` — optional environment-configured initial administrator.
+- `db/migration/` — V1 unified schema and V2 additive schema for token versions, availability, event details, timetable slots and group chat records.
 
-Passwords are BCrypt-encoded (cost 12). Non-public API routes require authentication; admin routes additionally require `ROLE_ADMIN`. Owner-scoped methods use the current authenticated principal rather than trusting user IDs supplied by the client.
+Passwords are BCrypt-encoded (cost 12). Non-public API routes require authentication; admin routes additionally require `ROLE_ADMIN`. Owner-scoped methods use the current authenticated principal rather than trusting user IDs supplied by the client. Password change/logout increment a database token version checked by the bearer filter, invalidating other tokens for that account. Optional `VCOMM_ALLOWED_EMAIL_DOMAINS` restricts login, faculty provisioning and bootstrap admin domains; it does not verify ownership of the mailbox.
 
 ## Persistence
 
-The application defaults to local in-memory H2 with the console disabled. MySQL is configurable via environment variables. Flyway migration `V1__create_vcomm_schema.sql` defines the unified schema; Hibernate validates the schema rather than creating tables automatically.
+The application defaults to local in-memory H2 with the console disabled. MySQL is configurable via environment variables. Flyway V1 defines the unified schema; V2 adds token/availability fields, event scheduling details, structured timetable slots and group messages. Hibernate validates the migrated schema rather than creating tables automatically.
 
 The initial migration is designed for a new database. It is not a data-preserving migration from the earlier plaintext-password V2 schema. Faculty accounts must be re-provisioned or have credentials reset before moving real users.
 
@@ -49,13 +51,13 @@ Firebase V1 identifies users by Firebase UIDs and stores messages in Firestore d
 
 ## Remaining architecture work
 
-- Group conversation, membership and admin-role domain model.
+- Group deletion/ownership transfer lifecycle and pagination.
 - Attachment metadata and approved object storage.
 - Rich message operations (reply, forward, edit/delete, reactions, pin/star, archive).
-- Real-time or explicitly documented push/poll messaging.
-- Persisted notification preferences and verified delivery flow.
+- Replace current polling with real-time transport only if product requirements justify it; polling is the current documented synchronization strategy.
+- Persisted notification preferences and verified background/push delivery flow.
 - Integrated admin web interface calling the protected admin API.
 - Pagination, rate limiting, audit events and automated security tests.
 - Spring Boot 4.x upgrade and compatibility tests before a long-lived public deployment.
 
-The source has not yet passed a clean build or end-to-end verification; see [Baseline Verification](BASELINE_VERIFICATION.md).
+The current uncommitted implementation has not passed a build or end-to-end verification; historical CI applies to the prior pushed baseline only. See [Baseline Verification](BASELINE_VERIFICATION.md).

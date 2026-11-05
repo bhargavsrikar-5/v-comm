@@ -7,6 +7,8 @@ import com.vcomm.app.model.UserRole;
 import com.vcomm.app.repository.SearchHistoryRepository;
 import com.vcomm.app.repository.UserRepository;
 import com.vcomm.app.security.JwtService;
+import com.vcomm.app.security.InstitutionalEmailPolicy;
+import com.vcomm.app.model.AvailabilityStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,19 +23,23 @@ public class UserService {
     private final SearchHistoryRepository searchHistoryRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final InstitutionalEmailPolicy emailPolicy;
 
     public UserService(UserRepository userRepository,
                        SearchHistoryRepository searchHistoryRepository,
                        PasswordEncoder passwordEncoder,
-                       JwtService jwtService) {
+                       JwtService jwtService,
+                       InstitutionalEmailPolicy emailPolicy) {
         this.userRepository = userRepository;
         this.searchHistoryRepository = searchHistoryRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.emailPolicy = emailPolicy;
     }
 
     public AuthResponse login(LoginRequest request) {
         String email = request.getEmail().trim().toLowerCase();
+        if (!emailPolicy.isAllowed(email)) return new AuthResponse(false, "Invalid email or password");
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty() || !passwordEncoder.matches(request.getPassword(), userOpt.get().getPasswordHash())) {
             // Keep the same response for unknown email and wrong password.
@@ -48,6 +54,7 @@ public class UserService {
     @Transactional
     public UserResponse createFaculty(RegisterRequest request) {
         String email = request.getEmail().trim().toLowerCase();
+        emailPolicy.requireAllowed(email);
         if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Email is already registered.");
         }
@@ -74,8 +81,17 @@ public class UserService {
             return new ApiResponse(false, "Choose a new password that is different from the current password.");
         }
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
         return new ApiResponse(true, "Password changed successfully.");
+    }
+
+    @Transactional
+    public void logout(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User account was not found."));
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        userRepository.save(user);
     }
 
     public List<UserResponse> searchUsers(String query) {
@@ -117,6 +133,14 @@ public class UserService {
     }
 
     @Transactional
+    public Optional<UserResponse> updateAvailability(Long id, AvailabilityStatus status) {
+        return userRepository.findById(id).map(user -> {
+            user.setAvailabilityStatus(status);
+            return UserResponse.from(userRepository.save(user));
+        });
+    }
+
+    @Transactional
     public Optional<UserResponse> updateTimetableUrl(Long id, String timetableUrl) {
         if (timetableUrl == null || timetableUrl.isBlank() || timetableUrl.length() > 2000) {
             throw new IllegalArgumentException("A valid timetable URL is required.");
@@ -127,8 +151,8 @@ public class UserService {
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException("Timetable URL is invalid.");
         }
-        if (!"https".equalsIgnoreCase(uri.getScheme()) && !"http".equalsIgnoreCase(uri.getScheme())) {
-            throw new IllegalArgumentException("Timetable URL must use HTTP or HTTPS.");
+        if (!"https".equalsIgnoreCase(uri.getScheme())) {
+            throw new IllegalArgumentException("Timetable URL must use HTTPS.");
         }
         if (uri.getHost() == null) {
             throw new IllegalArgumentException("Timetable URL must contain a host name.");
