@@ -1,6 +1,6 @@
 # Security baseline
 
-This is a first-pass static source baseline, not a certification or penetration-test report.
+This is a first-pass static source baseline for the merged `main` implementation, not a certification or penetration-test report. GitHub Actions Run #9 passed backend tests, Flutter analysis/tests, Android debug build, and iOS simulator build on the PR #2 head commit included in `main`; those checks do not establish production security.
 
 Implemented in the current candidate:
 
@@ -19,7 +19,7 @@ Implemented in the current candidate:
 
 Still required before production use:
 
-- Automated authentication/authorization/data-isolation tests for the current source and penetration testing.
+- Broader authentication/authorization/data-isolation coverage and penetration testing; the existing CI suite is not a complete security assessment.
 - Rate limiting, refresh-token/session-management design and security audit events.
 - Upgrade to a currently supported Spring Boot release.
 - Persistent MySQL configuration, backups, migration rehearsal and deployment secret management.

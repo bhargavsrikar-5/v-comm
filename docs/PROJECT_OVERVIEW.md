@@ -27,4 +27,4 @@ The intended primary users are faculty members. Administrative users provision a
 
 ## Scope boundary
 
-The current active source is a prototype/migration candidate. The current local migration changes add group messaging, structured timetable slots, event details and reminders, token revocation and configurable domain restrictions. Those changes have not been built, tested or verified against a deployed database/API. Do not use real faculty data until the remaining security and verification gates are closed.
+The consolidated implementation is merged into `main`. GitHub Actions Run #9 passed the configured backend tests, Flutter analysis/tests, Android debug build, and iOS simulator build on PR #2's head commit. CI success does not establish a production deployment, physical-device walkthrough, complete end-to-end verification, or penetration-test result. Do not use real faculty data until the remaining security and operational verification gates are closed.

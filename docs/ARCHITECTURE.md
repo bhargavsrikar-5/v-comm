@@ -60,4 +60,4 @@ Firebase V1 identifies users by Firebase UIDs and stores messages in Firestore d
 - Pagination, rate limiting, audit events and automated security tests.
 - Spring Boot 4.x upgrade and compatibility tests before a long-lived public deployment.
 
-The current uncommitted implementation has not passed a build or end-to-end verification; historical CI applies to the prior pushed baseline only. See [Baseline Verification](BASELINE_VERIFICATION.md).
+The group, timetable and event implementation is merged into `main`. GitHub Actions Run #9 passed the backend tests, Flutter analysis/tests, Android debug build, and iOS simulator build on PR #2's head commit. Those CI checks do not verify production deployment, MySQL operations, physical-device behavior, full end-to-end workflows, or penetration resistance. See [Baseline Verification](BASELINE_VERIFICATION.md).

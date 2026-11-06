@@ -1,6 +1,6 @@
 # Feature implementation matrix
 
-This matrix describes source-level implementation on `vcomm/requirements-completion`. The current local changes have not been built, tested, or exercised against a running database/API. “Implemented in source” means the route, service, model and relevant Flutter call path are present; it is not a runtime pass.
+This matrix describes source-level implementation in the consolidated `main` branch. GitHub Actions Run #9 passed backend tests, Flutter analysis and tests, Android debug build, and iOS simulator build on PR #2's head commit `84d4b5bb7f2f4565dde0dca1ccb2876930e7acd8`, which is included in `main`. “Implemented in source” means the route, service, model and relevant Flutter call path are present; CI success does not prove a deployed or manually exercised end-to-end flow.
 
 | Feature | Active implementation | Status / limits | Firebase-era reference |
 |---|---|---|---|
@@ -24,4 +24,4 @@ This matrix describes source-level implementation on `vcomm/requirements-complet
 
 ## Verification boundary
 
-GitHub Actions run 6 refers to the previously pushed source baseline. It does not include the current uncommitted implementation. No build, test, database migration or runtime result is claimed for the current local changes. See [Baseline Verification](BASELINE_VERIFICATION.md) and [API Contract](API_CURRENT.md).
+Run #9 verifies the CI jobs listed above for the PR head commit. Production database migration, deployment, physical-device use, and full end-to-end workflows remain unverified. See [Baseline Verification](BASELINE_VERIFICATION.md) and [API Contract](API_CURRENT.md).

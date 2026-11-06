@@ -83,4 +83,4 @@ There is no integrated admin web UI yet. The first administrator is bootstrapped
 - Password change and logout revoke account tokens through a token version checked against the database on each request. There is no refresh-token flow; access tokens also expire after the configured interval (default 12 hours).
 - No rate limiting or account lockout has been implemented.
 - List and message-history endpoints do not yet have pagination.
-- The current uncommitted group, timetable, event, availability, token-version and domain-policy changes have not been tested or built. Historical CI results apply to the last pushed baseline only.
+- GitHub Actions Run #9 passed the configured backend tests, Flutter analysis/tests, Android debug build, and iOS simulator build on PR #2 head commit `84d4b5bb7f2f4565dde0dca1ccb2876930e7acd8`, now included in `main`. This CI result does not establish that each endpoint has been manually exercised against a deployed API or production database.

@@ -11,19 +11,17 @@
 - Android application identifier and Flutter API base URL configured for the unified workspace.
 - A stale Flutter secure-storage helper reference was corrected in this candidate before packaging.
 - XML, POM, plist, JSON and YAML files passed structural parsing during package preparation; this is not an application compile or dependency-resolution check.
-- GitHub Actions run 6 passed `mvn test`, Flutter analysis/tests and an Android debug APK build on the previously pushed baseline. These results do not cover the current uncommitted migration changes.
+- GitHub Actions Run #9 completed successfully on PR #2 head commit `84d4b5bb7f2f4565dde0dca1ccb2876930e7acd8`, which is included in the merged `main` branch. Backend Maven tests, Flutter analysis and tests, Android debug build, and iOS simulator build all passed.
 - Release Android manifest now declares INTERNET; debug-only cleartext traffic is limited to local backend development.
-- Official Gradle 8.14.3 wrapper scripts and JAR are tracked; the JAR matches the published checksum and the distribution URL is checksum-pinned. Android debug APK build passed in GitHub Actions run 6 with AGP 8.11.1 and Kotlin 2.2.20.
+- Official Gradle 8.14.3 wrapper scripts and JAR are tracked; the JAR matches the published checksum and the distribution URL is checksum-pinned. Android debug APK build passed in GitHub Actions Run #9 with the workflow's configured toolchain.
 
 ## Not yet verified
 
-- The current local changes to group messaging, structured timetable slots, event metadata/reminders, token versioning and configurable email domains have not been compiled, tested or run.
-- Historical Flutter analysis/tests and Android debug APK build passed in GitHub Actions run 6 for the prior pushed baseline. The iOS simulator build passed in run 3; run 6's iOS job was recorded as queued at the last check, and its current state was not checked in this handoff.
+- Full manual sign-in, provisioning, profile, search, event, timetable, direct/group chat and cross-user workflows have not been verified end-to-end on a running deployment or physical device.
 - MySQL connection, Flyway schema migration/persistence across restart, physical-device walkthrough, full end-to-end flows and penetration testing.
-- Full end-to-end sign-in, provisioning, events, search, profile and chat flows.
-- Penetration testing, rate limiting, refresh-token/session management or security-event auditing. Token-version revocation exists in the current uncommitted source but has not been verified.
+- Penetration testing, rate limiting, refresh-token/session management or security-event auditing. Token-version revocation is implemented in source, but CI is not a substitute for a security review.
 - Media upload, integrated admin UI, push/background notifications, and rich message actions.
 
 ## Environment limitation
 
-No builds or tests were run for this implementation checkpoint by instruction. Historical GitHub Actions run 6 results apply only to the earlier pushed baseline; they must not be used to claim that this local source passes. The current changed source requires the final testing phase.
+No local builds or tests were run during this documentation cleanup. CI Run #9 passed on the PR head commit noted above. That run does not verify a production deployment, MySQL operations, physical-device behavior, full end-to-end workflows, or penetration resistance.
